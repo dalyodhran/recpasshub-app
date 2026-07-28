@@ -1,13 +1,12 @@
 import { SymbolView } from "expo-symbols";
 import { PropsWithChildren, useState } from "react";
-import { Pressable, StyleSheet } from "react-native";
+import { Pressable } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
-import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { Spacing } from "@/constants/theme";
+import { ThemedText } from "@/components/ui/themed-text";
+import { ThemedView } from "@/components/ui/themed-view";
 import { useTheme } from "@/hooks/use-theme";
-import { styles } from "./collapsible.styles";
+import { styles } from "@/styles/collapsible.styles";
 
 export function Collapsible({
   children,

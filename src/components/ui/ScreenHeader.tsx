@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { styles } from "./ScreenHeader.styles";
+import { styles } from '@/styles/ScreenHeader.styles';
 
 type Props = {
   title: string;

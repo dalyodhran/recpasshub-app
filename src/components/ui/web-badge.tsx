@@ -6,7 +6,7 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
-import { styles } from './web-badge.styles';
+import { styles } from '@/styles/web-badge.styles';
 
 export function WebBadge() {
   const scheme = useColorScheme();

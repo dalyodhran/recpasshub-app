@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { ScrollView, View, useColorScheme } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { ThemedText } from "@/components/themed-text";
 import {
   AuthCard,
   AuthDivider,
@@ -11,6 +10,7 @@ import {
   PrimaryButton,
   SocialAuthButtons,
 } from "@/components/auth";
+import { ThemedText } from "@/components/ui/themed-text";
 import { Colors, Spacing } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { authStyles } from "@/styles/auth.styles";

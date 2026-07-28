@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Colors } from "@/constants/BoldBlueTheme";
-import { styles } from "./TopAppBar.styles";
+import { styles } from '@/styles/TopAppBar.styles';
 
 interface TopAppBarProps {
   title: string;

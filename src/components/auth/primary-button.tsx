@@ -1,8 +1,8 @@
-import React from "react";
-import { ActivityIndicator, Pressable, useColorScheme } from "react-native";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/ui/themed-text";
 import { Colors } from "@/constants/theme";
 import { authStyles } from "@/styles/auth.styles";
+import React from "react";
+import { ActivityIndicator, Pressable, useColorScheme } from "react-native";
 
 interface PrimaryButtonProps {
   label: string;

@@ -1,3 +1,7 @@
+import { ThemedText } from "@/components/ui/themed-text";
+import { Colors } from "@/constants/theme";
+import { authStyles } from "@/styles/auth.styles";
+import { SFSymbol, SymbolView } from "expo-symbols";
 import React, { useState } from "react";
 import {
   Pressable,
@@ -6,10 +10,6 @@ import {
   View,
   useColorScheme,
 } from "react-native";
-import { SymbolView, SFSymbol } from "expo-symbols";
-import { ThemedText } from "@/components/themed-text";
-import { Colors } from "@/constants/theme";
-import { authStyles } from "@/styles/auth.styles";
 
 interface LabeledInputProps extends TextInputProps {
   label: string;

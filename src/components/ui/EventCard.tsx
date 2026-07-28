@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Colors } from "@/constants/BoldBlueTheme";
-import { styles } from "./EventCard.styles";
+import { styles } from '@/styles/EventCard.styles';
 
 export interface EventData {
   id: string;

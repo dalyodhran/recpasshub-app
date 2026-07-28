@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { styles } from "./SectionCard.styles";
+import { styles } from '@/styles/SectionCard.styles';
 
 type Props = {
   title?: string;

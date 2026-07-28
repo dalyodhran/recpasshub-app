@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Colors } from "@/constants/BoldBlueTheme";
-import { styles } from "./FilterChip.styles";
+import { styles } from '@/styles/FilterChip.styles';
 
 interface FilterChipProps {
   label: string;

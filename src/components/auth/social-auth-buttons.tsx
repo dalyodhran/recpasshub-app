@@ -1,9 +1,9 @@
-import React from "react";
-import { Pressable, View, useColorScheme } from "react-native";
-import { SymbolView } from "expo-symbols";
-import { ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/ui/themed-text";
 import { Colors } from "@/constants/theme";
 import { authStyles } from "@/styles/auth.styles";
+import { SymbolView } from "expo-symbols";
+import React from "react";
+import { Pressable, View, useColorScheme } from "react-native";
 
 interface SocialAuthButtonsProps {
   onPressGoogle: () => void;

@@ -1,19 +1,12 @@
-import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
-} from "react-native";
-import TopAppBar from "@/components/TopAppBar";
-import FilterChip from "@/components/FilterChip";
-import EventCard from "@/components/EventCard";
-import type { EventData } from "@/components/EventCard";
+import type { EventData } from "@/components/ui/EventCard";
+import EventCard from "@/components/ui/EventCard";
+import FilterChip from "@/components/ui/FilterChip";
+import TopAppBar from "@/components/ui/TopAppBar";
 import { Colors } from "@/constants/BoldBlueTheme";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { styles } from "@/styles/explore.styles";
+import { useState } from "react";
+import { FlatList, ScrollView, StatusBar, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const MOCK_EVENTS: EventData[] = [
   {

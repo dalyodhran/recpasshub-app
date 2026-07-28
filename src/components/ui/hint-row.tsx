@@ -5,7 +5,7 @@ import { ThemedText } from "./themed-text";
 import { ThemedView } from "./themed-view";
 
 import { Spacing } from "@/constants/theme";
-import { styles } from "./hint-row.styles";
+import { styles } from '@/styles/hint-row.styles';
 
 type HintRowProps = {
   title?: string;

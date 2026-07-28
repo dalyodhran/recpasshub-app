@@ -1,6 +1,6 @@
-import React from "react";
-import { ThemedView } from "@/components/themed-view";
+import { ThemedView } from "@/components/ui/themed-view";
 import { authStyles } from "@/styles/auth.styles";
+import React from "react";
 
 interface AuthCardProps {
   children: React.ReactNode;

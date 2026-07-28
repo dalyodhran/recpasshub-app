@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { styles } from './ListItem.styles';
+import { styles } from '@/styles/ListItem.styles';
 
 type Props = {
   icon?: keyof typeof MaterialIcons.glyphMap;

@@ -1,16 +1,16 @@
-import { useEffect } from "react";
 import {
   DarkTheme,
   DefaultTheme,
-  ThemeProvider,
   Stack,
+  ThemeProvider,
   useRouter,
   useSegments,
 } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
-import { AnimatedSplashOverlay } from "@/components/animated-icon";
+import { AnimatedSplashOverlay } from "@/components/ui/animated-icon";
 import { AuthProvider, useAuth } from "@/context/auth-context";
 
 SplashScreen.preventAutoHideAsync();
