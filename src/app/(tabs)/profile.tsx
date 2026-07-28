@@ -13,7 +13,7 @@ import { useAuth } from "@/context/auth-context";
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { ListItem } from "@/components/ui/ListItem";
-import { styles } from "./profile.styles";
+import { styles } from "@/styles/profile.styles";
 
 export default function ProfileScreen() {
   const { logout, user } = useAuth();
