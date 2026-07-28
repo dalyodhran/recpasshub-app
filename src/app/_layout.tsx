@@ -22,12 +22,12 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    // Basic navigation guard
-    const inTabsGroup = segments[0] === "(tabs)";
-
-    if (isAuthenticated && !inTabsGroup) {
+    // If the user is authenticated and on the root index (auth screen), redirect them to tabs.
+    if (isAuthenticated && segments.length === 0) {
       router.replace("/(tabs)/explore");
-    } else if (!isAuthenticated && inTabsGroup) {
+    }
+    // If the user is NOT authenticated and trying to access an internal page, redirect them to index.
+    else if (!isAuthenticated && segments.length > 0) {
       router.replace("/");
     }
   }, [isAuthenticated, segments]);

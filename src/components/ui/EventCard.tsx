@@ -2,18 +2,9 @@ import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Colors } from "@/constants/BoldBlueTheme";
-import { styles } from '@/styles/EventCard.styles';
+import { styles } from "@/styles/EventCard.styles";
 
-export interface EventData {
-  id: string;
-  title: string;
-  organizer: string;
-  sport: "Cycling" | "Running" | "Swimming";
-  date: string;
-  time: string;
-  distance: string;
-  imageUrl: string;
-}
+import type { EventData } from "@/data/mockEvents";
 
 export default function EventCard({
   event,
