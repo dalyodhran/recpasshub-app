@@ -79,9 +79,11 @@ export default function MyPassScreen() {
               const isActive = index === 0;
 
               return (
-                <View 
+                <TouchableOpacity 
                   key={pass.id} 
                   style={[styles.passCard, isActive && styles.passCardActiveBorder]}
+                  activeOpacity={0.9}
+                  onPress={() => router.push(`/pass/${pass.id}`)}
                 >
                   <View style={styles.passCardTop}>
                     <View>
@@ -116,22 +118,8 @@ export default function MyPassScreen() {
                         <Text style={[styles.bibNumber, styles.bibPending]}>Pending</Text>
                       )}
                     </View>
-                    <TouchableOpacity 
-                      style={isActive ? styles.btnActive : styles.btnSecondary} 
-                      onPress={() => router.push(`/event/${pass.id}`)} 
-                      activeOpacity={0.8}
-                    >
-                      <Text style={isActive ? styles.btnActiveText : styles.btnSecondaryText}>
-                        View Details
-                      </Text>
-                      <MaterialIcons 
-                        name="arrow-forward" 
-                        size={18} 
-                        color={isActive ? Colors.onPrimary : Colors.primary} 
-                      />
-                    </TouchableOpacity>
                   </View>
-                </View>
+                </TouchableOpacity>
               );
             })
           )}
