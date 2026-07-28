@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import TopAppBar from '@/components/ui/TopAppBar';
@@ -8,6 +9,7 @@ import { styles } from '@/styles/mypass.styles';
 
 export default function MyPassScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'Upcoming' | 'Past'>('Upcoming');
 
   return (
@@ -84,7 +86,7 @@ export default function MyPassScreen() {
                 <Text style={styles.bibLabel}>Bib Number</Text>
                 <Text style={styles.bibNumber}>#4092</Text>
               </View>
-              <TouchableOpacity style={styles.btnActive} activeOpacity={0.8}>
+              <TouchableOpacity style={styles.btnActive} onPress={() => router.push('/event/2?registered=true')} activeOpacity={0.8}>
                 <Text style={styles.btnActiveText}>View Details</Text>
                 <MaterialIcons name="arrow-forward" size={18} color={Colors.onPrimary} />
               </TouchableOpacity>
@@ -114,7 +116,7 @@ export default function MyPassScreen() {
                 <Text style={styles.bibLabel}>Bib Number</Text>
                 <Text style={[styles.bibNumber, styles.bibPending]}>Pending</Text>
               </View>
-              <TouchableOpacity style={styles.btnSecondary} activeOpacity={0.8}>
+              <TouchableOpacity style={styles.btnSecondary} onPress={() => router.push('/event/1?registered=true')} activeOpacity={0.8}>
                 <Text style={styles.btnSecondaryText}>View Details</Text>
                 <MaterialIcons name="arrow-forward" size={18} color={Colors.primary} />
               </TouchableOpacity>

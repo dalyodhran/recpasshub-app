@@ -6,13 +6,21 @@ import { styles } from '@/styles/TopAppBar.styles';
 
 interface TopAppBarProps {
   title: string;
+  showBackButton?: boolean;
+  onBackPress?: () => void;
 }
 
-export default function TopAppBar({ title }: TopAppBarProps) {
+export default function TopAppBar({ title, showBackButton, onBackPress }: TopAppBarProps) {
   return (
     <View style={styles.header}>
-      {/* Invisible placeholder for symmetry if we had a back button */}
-      <View style={styles.iconButtonPlaceholder} />
+      {/* Conditionally render back button or placeholder */}
+      {showBackButton ? (
+        <TouchableOpacity style={styles.iconButton} onPress={onBackPress} activeOpacity={0.7}>
+          <MaterialIcons name="arrow-back" size={24} color={Colors.onPrimary} />
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.iconButtonPlaceholder} />
+      )}
 
       <Text style={styles.title}>{title}</Text>
 

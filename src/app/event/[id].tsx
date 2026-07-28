@@ -43,9 +43,11 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export default function EventDetailsScreen() {
-  const { id } = useLocalSearchParams();
+  const { id, registered } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  
+  const isRegistered = registered === 'true';
 
   const event = MOCK_EVENTS.find((e) => e.id === id);
 
@@ -69,7 +71,11 @@ export default function EventDetailsScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ paddingTop: insets.top, backgroundColor: Colors.primary }}>
-        <TopAppBar title="Rec Pass Hub" />
+        <TopAppBar 
+          title="Rec Pass Hub" 
+          showBackButton={true} 
+          onBackPress={() => router.back()} 
+        />
       </View>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Map Snapshot */}
@@ -81,8 +87,16 @@ export default function EventDetailsScreen() {
         <View style={styles.contentContainer}>
           {/* Event Header */}
           <View style={styles.headerCard}>
-            <View style={styles.sportBadge}>
-              <Text style={styles.sportBadgeText}>{event.sport}</Text>
+            <View style={styles.badgesRow}>
+              <View style={styles.sportBadge}>
+                <Text style={styles.sportBadgeText}>{event.sport}</Text>
+              </View>
+              {isRegistered && (
+                <View style={styles.joinedBadge}>
+                  <MaterialIcons name="check-circle" size={14} color={Colors.onTertiaryContainer} />
+                  <Text style={styles.joinedBadgeText}>Joined</Text>
+                </View>
+              )}
             </View>
             <Text style={styles.title}>{event.title}</Text>
             <View style={styles.metaRow}>
@@ -188,25 +202,34 @@ export default function EventDetailsScreen() {
           { paddingBottom: Math.max(insets.bottom, 16) },
         ]}
       >
-        <View style={styles.sponsorBanner}>
-          <View style={styles.sponsorLeft}>
-            <View style={styles.sponsorIcon}>
-              <MaterialIcons
-                name="storefront"
-                size={24}
-                color={Colors.onPrimary}
-              />
+        {isRegistered && (
+          <View style={styles.sponsorBanner}>
+            <View style={styles.sponsorLeft}>
+              <View style={styles.sponsorIcon}>
+                <MaterialIcons
+                  name="storefront"
+                  size={24}
+                  color={Colors.onPrimary}
+                />
+              </View>
+              <View>
+                <Text style={styles.sponsorLabel}>Local Sponsor</Text>
+                <Text style={styles.sponsorName}>Athletics Co. Downtown</Text>
+              </View>
             </View>
-            <View>
-              <Text style={styles.sponsorLabel}>Local Sponsor</Text>
-              <Text style={styles.sponsorName}>Athletics Co. Downtown</Text>
-            </View>
+            <Text style={styles.sponsorLink}>View Offer</Text>
           </View>
-          <Text style={styles.sponsorLink}>View Offer</Text>
-        </View>
+        )}
 
         <TouchableOpacity style={styles.joinButton} activeOpacity={0.8}>
-          <Text style={styles.joinButtonText}>Join & Sign Waiver ($15)</Text>
+          {isRegistered ? (
+            <>
+              <MaterialIcons name="chat" size={20} color={Colors.onPrimary} />
+              <Text style={styles.joinButtonText}>Message Organizer</Text>
+            </>
+          ) : (
+            <Text style={styles.joinButtonText}>Join & Sign Waiver ($15)</Text>
+          )}
         </TouchableOpacity>
       </View>
     </View>
