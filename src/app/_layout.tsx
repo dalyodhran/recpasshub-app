@@ -23,11 +23,11 @@ function RootLayoutNav() {
 
   useEffect(() => {
     // Basic navigation guard
-    const inHomeGroup = segments[0] === "home";
+    const inTabsGroup = segments[0] === "(tabs)";
 
-    if (isAuthenticated && !inHomeGroup) {
-      router.replace("/home");
-    } else if (!isAuthenticated && inHomeGroup) {
+    if (isAuthenticated && !inTabsGroup) {
+      router.replace("/(tabs)/explore");
+    } else if (!isAuthenticated && inTabsGroup) {
       router.replace("/");
     }
   }, [isAuthenticated, segments]);
@@ -37,7 +37,7 @@ function RootLayoutNav() {
       <AnimatedSplashOverlay />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="home" />
+        <Stack.Screen name="(tabs)" />
       </Stack>
     </ThemeProvider>
   );
