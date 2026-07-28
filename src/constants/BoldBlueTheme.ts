@@ -6,6 +6,7 @@ export const Colors = {
   surfaceContainerLow: "#f2f4f6",
   surfaceContainer: "#eceef0",
   surfaceContainerHigh: "#e6e8ea",
+  surfaceContainerHighest: "#e0e3e5",
   onSurface: "#191c1e",
   onSurfaceVariant: "#424754",
   outlineVariant: "#c2c6d6",

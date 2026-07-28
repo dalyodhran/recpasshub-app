@@ -15,6 +15,17 @@ export interface EventData {
   faqs: { question: string; answer: string }[];
 }
 
+// Simple mutable state to mock a real backend
+export const myPassIds = new Set<string>(["2", "4"]); // 2 = Golden Gate, 4 = Marin Headlands
+
+export function addPass(id: string) {
+  myPassIds.add(id);
+}
+
+export function getMyPasses(): EventData[] {
+  return MOCK_EVENTS.filter((e) => myPassIds.has(e.id));
+}
+
 export const MOCK_EVENTS: EventData[] = [
   {
     id: "1",
@@ -96,6 +107,29 @@ export const MOCK_EVENTS: EventData[] = [
       {
         question: "Do I need a bright swim cap?",
         answer: "Yes, high visibility swim caps are mandatory for safety.",
+      },
+    ],
+  },
+  {
+    id: "4",
+    title: "Marin Headlands Half",
+    organizer: "Trail Runners Co.",
+    sport: "Running",
+    date: "Nov 12",
+    time: "8:00 AM",
+    distance: "13.1 mi",
+    imageUrl:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCkj_r4KTzGQ276GtwblyHU1uDSlWLaODCLGFovt1w1r0YSCNJfOxp_OUtfoa1jTpZBZowJ9ufEVhNlvpTbuJ7cp0Wqh0rMIhCNQIhW2MNmX9ouriLN2djSDX-VsLpd_jxWpoq44KFmfMrhkaaceGGQPF4Jeo6vvYuq2SqwwGvGH_2oedmN2QwIwHafDPVTDTBU3wGuJYJRSg5HTRTcz3pZwQDrgGdxJqje3AYlgE2XIkvEQ1gJqmOcAw",
+    location: "Sausalito, CA",
+    elevation: "1,500 ft",
+    targetPace: "8:00/mi",
+    capacity: "75 / 150",
+    about:
+      "A scenic and challenging half marathon through the beautiful Marin Headlands. Get ready for steep climbs and rewarding views of the Pacific Ocean.",
+    faqs: [
+      {
+        question: "Are trail shoes required?",
+        answer: "Yes, trail running shoes are highly recommended due to loose dirt and rocks.",
       },
     ],
   },

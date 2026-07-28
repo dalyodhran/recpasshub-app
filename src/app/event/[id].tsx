@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { MOCK_EVENTS } from "@/data/mockEvents";
+import { MOCK_EVENTS, myPassIds } from "@/data/mockEvents";
 import { styles } from "@/styles/event-details.styles";
 import { Colors } from "@/constants/BoldBlueTheme";
 import TopAppBar from "@/components/ui/TopAppBar";
@@ -47,7 +47,10 @@ export default function EventDetailsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
-  const isRegistered = registered === 'true';
+  // Real app would fetch this from a user profile or context
+  // Here we use our mock global state for true dynamic updates
+  const isRegisteredParam = registered === 'true';
+  const isRegistered = (typeof id === 'string' && myPassIds.has(id)) || isRegisteredParam;
 
   const event = MOCK_EVENTS.find((e) => e.id === id);
 
@@ -221,7 +224,17 @@ export default function EventDetailsScreen() {
           </View>
         )}
 
-        <TouchableOpacity style={styles.joinButton} activeOpacity={0.8}>
+        <TouchableOpacity 
+          style={styles.joinButton} 
+          activeOpacity={0.8}
+          onPress={() => {
+            if (isRegistered) {
+              router.push(`/event/message/${id}`);
+            } else {
+              router.push(`/event/checkout/${id}`);
+            }
+          }}
+        >
           {isRegistered ? (
             <>
               <MaterialIcons name="chat" size={20} color={Colors.onPrimary} />
