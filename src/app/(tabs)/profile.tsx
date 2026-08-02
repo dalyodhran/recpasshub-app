@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "@/context/auth-context";
+import { useRouter } from "expo-router";
 
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
 import { SectionCard } from "@/components/ui/SectionCard";
@@ -17,12 +18,17 @@ import { styles } from "@/styles/profile.styles";
 
 export default function ProfileScreen() {
   const { logout, user } = useAuth();
+  const router = useRouter();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(false);
 
   return (
     <View style={styles.safeArea}>
-      <ScreenHeader title="Rec Pass Hub" rightIcon="notifications" />
+      <ScreenHeader
+        title="Rec Pass Hub"
+        rightIcon="notifications"
+        onRightPress={() => router.push("/notifications")}
+      />
 
       <ScrollView
         style={styles.container}

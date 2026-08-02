@@ -3,6 +3,7 @@ export const Colors = {
   primary: "#0058be",
   onPrimary: "#ffffff",
   primaryFixed: "#d8e2ff",
+  primaryContainer: "#e0f2fe",
   surface: "#ffffff", // For cards
   surfaceContainerLowest: "#ffffff",
   surfaceContainerLow: "#f2f4f6",
@@ -11,6 +12,7 @@ export const Colors = {
   surfaceContainerHighest: "#e0e3e5",
   onBackground: "#191c1e",
   onSurface: "#191c1e",
+  surfaceVariant: "#f1f5f9",
   onSurfaceVariant: "#424754",
   outlineVariant: "#c2c6d6",
   outline: "#727785",
