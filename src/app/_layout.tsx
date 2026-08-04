@@ -11,7 +11,10 @@ import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/ui/animated-icon";
-import { AuthProvider, useAuth } from "@/context/auth-context";
+import { AuthProvider, useAuth } from "@/auth/AuthContext";
+import { KeycloakProvider } from "@/auth/providers/KeycloakProvider";
+
+const keycloakProvider = new KeycloakProvider();
 
 SplashScreen.preventAutoHideAsync();
 
@@ -47,7 +50,7 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
+    <AuthProvider authService={keycloakProvider}>
       <RootLayoutNav />
     </AuthProvider>
   );

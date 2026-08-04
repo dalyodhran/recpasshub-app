@@ -12,7 +12,7 @@ import {
 } from "@/components/auth";
 import { ThemedText } from "@/components/ui/themed-text";
 import { Colors, Spacing } from "@/constants/theme";
-import { useAuth } from "@/context/auth-context";
+import { useAuth } from "@/auth/AuthContext";
 import { authStyles } from "@/styles/auth.styles";
 
 export default function UnifiedAuthScreen() {

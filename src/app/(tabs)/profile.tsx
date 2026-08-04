@@ -8,7 +8,7 @@ import {
   Switch,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useAuth } from "@/context/auth-context";
+import { useAuth } from "@/auth/AuthContext";
 import { useRouter } from "expo-router";
 
 import { ScreenHeader } from "@/components/ui/ScreenHeader";
