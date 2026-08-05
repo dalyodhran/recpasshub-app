@@ -9,6 +9,7 @@ interface PrimaryButtonProps {
   onPress: () => void;
   isLoading?: boolean;
   disabled?: boolean;
+  primaryColor?: string;
 }
 
 export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
@@ -16,6 +17,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   onPress,
   isLoading = false,
   disabled = false,
+  primaryColor,
 }) => {
   const scheme = useColorScheme();
   const colors = Colors[scheme === "dark" ? "dark" : "light"];
@@ -24,7 +26,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
     <Pressable
       style={({ pressed }) => [
         authStyles.submitButton,
-        { backgroundColor: colors.primary },
+        { backgroundColor: primaryColor || colors.primary },
         (pressed || disabled) && {
           opacity: 0.88,
           transform: [{ scale: 0.98 }],

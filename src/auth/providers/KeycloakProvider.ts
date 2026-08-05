@@ -1,18 +1,28 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { IAuthService, AuthUser, Role } from '../types';
+import {
+  loginWithKeycloak,
+  registerWithKeycloak,
+  logoutFromKeycloak,
+  exchangeCodeForToken,
+  getRedirectUri,
+} from '@/services/keycloak';
 
 const TOKEN_STORAGE_KEY = 'recpasshub_auth_access_token';
+const ID_TOKEN_STORAGE_KEY = 'recpasshub_auth_id_token';
 
-async function storeToken(token: string): Promise<void> {
+async function storeToken(token: string, idToken?: string): Promise<void> {
   if (Platform.OS === 'web') {
     console.log('🌐 [TokenStorage] Storing token in web localStorage...');
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(TOKEN_STORAGE_KEY, token);
+      if (idToken) localStorage.setItem(ID_TOKEN_STORAGE_KEY, idToken);
     }
   } else {
     console.log('🔐 [SecureStore] Calling SecureStore.setItemAsync to persist token securely on native hardware...');
     await SecureStore.setItemAsync(TOKEN_STORAGE_KEY, token);
+    if (idToken) await SecureStore.setItemAsync(ID_TOKEN_STORAGE_KEY, idToken);
     console.log('✅ [SecureStore] Token successfully written to native SecureStore!');
   }
 }
@@ -22,16 +32,53 @@ async function removeToken(): Promise<void> {
     console.log('🌐 [TokenStorage] Removing token from web localStorage...');
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(TOKEN_STORAGE_KEY);
+      localStorage.removeItem(ID_TOKEN_STORAGE_KEY);
     }
   } else {
     console.log('🗑️ [SecureStore] Calling SecureStore.deleteItemAsync to purge token from native storage...');
     await SecureStore.deleteItemAsync(TOKEN_STORAGE_KEY);
+    await SecureStore.deleteItemAsync(ID_TOKEN_STORAGE_KEY);
     console.log('☑️ [SecureStore] Token successfully purged from SecureStore!');
   }
 }
 
-async function retrieveToken(): Promise<string | null> {
+async function retrieveIdToken(): Promise<string | null> {
   if (Platform.OS === 'web') {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(ID_TOKEN_STORAGE_KEY);
+    }
+    return null;
+  } else {
+    try {
+      return await SecureStore.getItemAsync(ID_TOKEN_STORAGE_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+}
+
+async function retrieveToken(): Promise<string | null> {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
+    // Check if we just redirected back from Keycloak with an authorization code
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code) {
+      console.log('🌐 [KeycloakProvider] Found OAuth callback code in URL! Exchanging for access token...');
+      try {
+        // Clear code from URL without triggering a full page reload
+        const newUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, newUrl);
+
+        const tokens = await exchangeCodeForToken(code, getRedirectUri());
+        if (tokens?.accessToken) {
+          await storeToken(tokens.accessToken, tokens.idToken);
+          return tokens.accessToken;
+        }
+      } catch (error) {
+        console.error('🌐 [KeycloakProvider] Failed to exchange authorization code for token:', error);
+      }
+    }
+
     console.log('🌐 [TokenStorage] Reading token from web localStorage...');
     if (typeof localStorage !== 'undefined') {
       return localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -63,40 +110,29 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-/**
- * Keycloak configuration settings should be injected here or passed via constructor.
- * Typical configuration required for Keycloak in React Native / @react-keycloak/native:
- * - url / baseUrl: Keycloak server root URL (e.g., 'http://localhost:9080/auth' or OIDC endpoint)
- * - realm: The targeted Keycloak Realm (e.g., 'jhipster' or 'event-hub')
- * - clientId: The OIDC Client ID registered in Keycloak (e.g., 'web_app' or 'rn_app')
- */
 export class KeycloakProvider implements IAuthService {
-  // Optional injection point for Keycloak client configuration:
-  // e.g., private config?: { url: string; realm: string; clientId: string; };
-
   public async login(email?: string): Promise<void> {
-    console.log(`KeycloakProvider: Initiating login flow${email ? ` for ${email}` : ''}...`);
-    const mockPayload = JSON.stringify({
-      sub: 'usr-12345',
-      email: email || 'organizer@recpasshub.com',
-      name: 'Alex Johnson',
-      realm_access: { roles: ['app-organizer', 'default-roles-jhipster'] },
-      exp: Math.floor(Date.now() / 1000) + 3600,
-    });
-    const encodedPayload = btoa(mockPayload);
-    const token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${encodedPayload}.mock_signature`;
-
-    await storeToken(token);
+    console.log(`KeycloakProvider: Initiating real Keycloak OIDC login flow${email ? ` for ${email}` : ''}...`);
+    const tokens = await loginWithKeycloak(email);
+    if (tokens?.accessToken) {
+      await storeToken(tokens.accessToken, tokens.idToken);
+    }
   }
 
   public async signup(email?: string): Promise<void> {
-    console.log(`KeycloakProvider: Initiating signup workflow${email ? ` for ${email}` : ''}...`);
-    await this.login(email);
+    console.log(`KeycloakProvider: Initiating Keycloak registration flow${email ? ` for ${email}` : ''}...`);
+    await registerWithKeycloak(email);
   }
 
   public async logout(): Promise<void> {
-    console.log('KeycloakProvider: Logging out and purging stored tokens...');
+    console.log('KeycloakProvider: Logging out from Keycloak server session and purging stored tokens...');
+    const idToken = await retrieveIdToken();
     await removeToken();
+    try {
+      await logoutFromKeycloak(idToken);
+    } catch (error) {
+      console.error('KeycloakProvider: Failed during Keycloak end-session logout:', error);
+    }
   }
 
   public async getAccessToken(): Promise<string | null> {
@@ -143,17 +179,27 @@ export class KeycloakProvider implements IAuthService {
       : [];
     let role: Role = 'ATTENDEE';
 
-    if (roles.includes('app-organizer') || roles.includes('ORGANIZER')) {
+    if (roles.includes('app-organizer') || roles.includes('ORGANIZER') || roles.includes('organizer')) {
       role = 'ORGANIZER';
     } else if (roles.includes('app-guest') || roles.includes('GUEST')) {
       role = 'GUEST';
     }
 
+    const nameValue =
+      typeof payload.name === 'string' && payload.name
+        ? payload.name
+        : typeof payload.preferred_username === 'string' && payload.preferred_username
+        ? payload.preferred_username
+        : typeof payload.email === 'string'
+        ? payload.email
+        : 'Keycloak User';
+
     return {
       id: typeof payload.sub === 'string' ? payload.sub : 'unknown_id',
       email: typeof payload.email === 'string' ? payload.email : 'unknown@example.com',
-      name: typeof payload.name === 'string' ? payload.name : 'Alex Johnson',
+      name: nameValue,
       role,
     };
   }
 }
+

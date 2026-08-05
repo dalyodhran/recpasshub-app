@@ -38,7 +38,7 @@ export async function loginWithKeycloak(
   const redirectUri = getRedirectUri();
   let authUrl = `${KEYCLOAK_CONFIG.authEndpoint}?client_id=${encodeURIComponent(
     KEYCLOAK_CONFIG.clientId,
-  )}&response_type=code&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  )}&response_type=code&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent(redirectUri)}&prompt=login`;
 
   if (emailHint && emailHint.trim()) {
     authUrl += `&login_hint=${encodeURIComponent(emailHint.trim())}`;
@@ -64,7 +64,7 @@ export async function registerWithKeycloak(emailHint?: string): Promise<void> {
   const redirectUri = getRedirectUri();
   let registerUrl = `${KEYCLOAK_CONFIG.registerEndpoint}?client_id=${encodeURIComponent(
     KEYCLOAK_CONFIG.clientId,
-  )}&response_type=code&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  )}&response_type=code&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent(redirectUri)}&prompt=login`;
 
   if (emailHint && emailHint.trim()) {
     registerUrl += `&login_hint=${encodeURIComponent(emailHint.trim())}`;
@@ -116,3 +116,23 @@ export async function fetchUserInfo(accessToken: string): Promise<UserProfile> {
   if (!res.ok) throw new Error("Failed to fetch user info");
   return res.json();
 }
+
+export async function logoutFromKeycloak(idToken?: string | null): Promise<void> {
+  const redirectUri = getRedirectUri();
+  let logoutUrl = `${KEYCLOAK_CONFIG.logoutEndpoint}?client_id=${encodeURIComponent(
+    KEYCLOAK_CONFIG.clientId,
+  )}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+  if (idToken) {
+    logoutUrl += `&id_token_hint=${encodeURIComponent(idToken)}`;
+  }
+
+  try {
+    // Perform a silent background fetch to notify Keycloak server to terminate session
+    // without launching any browser popup or intrusive window redirection.
+    await fetch(logoutUrl, { method: "GET" });
+  } catch (e) {
+    console.log("Silent background Keycloak logout fetch completed or ignored:", e);
+  }
+}
+

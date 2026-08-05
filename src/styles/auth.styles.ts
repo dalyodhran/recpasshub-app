@@ -5,6 +5,32 @@ export const authStyles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  roleSwitcherContainer: {
+    flexDirection: "row",
+    padding: 4,
+    borderRadius: 10,
+    marginBottom: Spacing.two,
+  },
+  roleTab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    borderRadius: 8,
+    gap: 8,
+  },
+  roleTabActive: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  roleTabText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
   topHeaderBanner: {
     width: "100%",
     paddingVertical: Spacing.three,

@@ -9,6 +9,8 @@ import {
   LabeledInput,
   PrimaryButton,
   SocialAuthButtons,
+  RoleSwitcher,
+  AuthRole,
 } from "@/components/auth";
 import { ThemedText } from "@/components/ui/themed-text";
 import { Colors, Spacing } from "@/constants/theme";
@@ -21,8 +23,18 @@ export default function UnifiedAuthScreen() {
   const { login, signup, isLoading } = useAuth();
   const insets = useSafeAreaInsets();
 
+  const [role, setRole] = useState<AuthRole>("attendee");
   const [email, setEmail] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  const activePrimaryColor =
+    role === "organizer"
+      ? scheme === "dark" ? "#f59e0b" : "#d97706" // Golden Amber for Organizer
+      : colors.primary; // Default Bold Blue for Attendee
+
+  const headerTitleText = role === "organizer" ? "Rec Pass Hub: Organizer" : "Rec Pass Hub";
+  const subtitleText =
+    role === "organizer" ? "Sign in to manage your events." : "Sign in to access your passes.";
 
   const handleContinue = async () => {
     if (!email.trim()) {
@@ -57,12 +69,12 @@ export default function UnifiedAuthScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Top Bold Blue Header */}
+      {/* Top Dynamic Header Banner */}
       <View
         style={[
           authStyles.topHeaderBanner,
           {
-            backgroundColor: colors.primary,
+            backgroundColor: activePrimaryColor,
             paddingTop: Math.max(insets.top, Spacing.three),
           },
         ]}
@@ -70,7 +82,7 @@ export default function UnifiedAuthScreen() {
         <ThemedText
           style={[authStyles.topHeaderTitle, { color: colors.onPrimary }]}
         >
-          Rec Pass Hub
+          {headerTitleText}
         </ThemedText>
       </View>
 
@@ -86,9 +98,11 @@ export default function UnifiedAuthScreen() {
           },
         ]}
       >
-        <AuthHeader title="Welcome" subtitle="Sign in or create an account." />
+        <AuthHeader title="Welcome Back" subtitle={subtitleText} />
 
         <AuthCard>
+          <RoleSwitcher role={role} onRoleChange={setRole} />
+
           <SocialAuthButtons
             onPressGoogle={handleSocialAuth}
             onPressApple={handleSocialAuth}
@@ -115,6 +129,7 @@ export default function UnifiedAuthScreen() {
               label="Continue"
               onPress={handleContinue}
               isLoading={isLoading}
+              primaryColor={activePrimaryColor}
             />
           </View>
         </AuthCard>
@@ -126,7 +141,7 @@ export default function UnifiedAuthScreen() {
           >
             Don&apos;t have a profile?{" "}
             <ThemedText
-              style={[authStyles.footerLink, { color: colors.primary }]}
+              style={[authStyles.footerLink, { color: activePrimaryColor }]}
               onPress={handleSignUp}
             >
               Sign up
@@ -141,13 +156,13 @@ export default function UnifiedAuthScreen() {
           >
             By continuing, you agree to our{" "}
             <ThemedText
-              style={[authStyles.termsLink, { color: colors.primary }]}
+              style={[authStyles.termsLink, { color: activePrimaryColor }]}
             >
               Terms
             </ThemedText>{" "}
             and{" "}
             <ThemedText
-              style={[authStyles.termsLink, { color: colors.primary }]}
+              style={[authStyles.termsLink, { color: activePrimaryColor }]}
             >
               Privacy Policy
             </ThemedText>
