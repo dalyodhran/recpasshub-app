@@ -19,23 +19,39 @@ const keycloakProvider = new KeycloakProvider();
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    const isRoot = (segments as string[]).length === 0;
+    // Never make routing decisions while SecureStore is still restoring the session
+    if (isLoading) return;
 
-    // If the user is authenticated and on the root index (auth screen), redirect them to tabs.
-    if (isAuthenticated && isRoot) {
+    const currentSegment = (segments as string[])[0];
+    const inAuthGroup =
+      currentSegment === "(tabs)" ||
+      currentSegment === "event" ||
+      currentSegment === "pass" ||
+      currentSegment === "notifications";
+    const onLoginScreen =
+      !currentSegment || currentSegment === "index" || currentSegment === "";
+
+    // If authenticated and currently sitting on the login screen, jump directly to tabs!
+    if (isAuthenticated && onLoginScreen) {
+      console.log(
+        "📍 [Router] Valid session detected on login screen. Redirecting to /(tabs)/explore...",
+      );
       router.replace("/(tabs)/explore");
-    } 
-    // If the user is NOT authenticated and trying to access an internal page, redirect them to index.
-    else if (!isAuthenticated && !isRoot) {
+    }
+    // If NOT authenticated and trying to access an internal protected page, send back to login.
+    else if (!isAuthenticated && inAuthGroup) {
+      console.log(
+        "📍 [Router] Unauthenticated access attempt. Redirecting to login screen...",
+      );
       router.replace("/");
     }
-  }, [isAuthenticated, segments]);
+  }, [isAuthenticated, isLoading, segments, router]);
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
