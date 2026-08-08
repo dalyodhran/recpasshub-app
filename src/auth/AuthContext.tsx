@@ -13,8 +13,8 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   authService: IAuthService;
-  login: (email?: string) => Promise<void>;
-  signup: (email?: string) => Promise<void>;
+  login: (email?: string, selectedRole?: string) => Promise<void>;
+  signup: (email?: string, selectedRole?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -62,10 +62,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     };
   }, [authService]);
 
-  const login = useCallback(async (email?: string) => {
+  const login = useCallback(async (email?: string, selectedRole?: string) => {
     setIsLoading(true);
     try {
-      await authService.login(email);
+      await authService.login(email, selectedRole);
       const token = await authService.getAccessToken();
       if (token) {
         const authUser = await authService.getUser();
@@ -81,13 +81,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     }
   }, [authService]);
 
-  const signup = useCallback(async (email?: string) => {
+  const signup = useCallback(async (email?: string, selectedRole?: string) => {
     setIsLoading(true);
     try {
       if (authService.signup) {
-        await authService.signup(email);
+        await authService.signup(email, selectedRole);
       } else {
-        await authService.login(email);
+        await authService.login(email, selectedRole);
       }
       const token = await authService.getAccessToken();
       if (token) {

@@ -43,7 +43,7 @@ export default function UnifiedAuthScreen() {
     }
     setErrorMsg("");
     try {
-      await login(email.trim());
+      await login(email.trim(), role);
     } catch (err: any) {
       setErrorMsg(err?.message || "Authentication failed");
     }
@@ -52,7 +52,7 @@ export default function UnifiedAuthScreen() {
   const handleSocialAuth = async () => {
     setErrorMsg("");
     try {
-      await login();
+      await login(undefined, role);
     } catch (err: any) {
       setErrorMsg(err?.message || "Authentication failed");
     }
@@ -61,7 +61,7 @@ export default function UnifiedAuthScreen() {
   const handleSignUp = async () => {
     setErrorMsg("");
     try {
-      await signup(email.trim());
+      await signup(email.trim(), role);
     } catch (err: any) {
       setErrorMsg(err?.message || "Registration failed");
     }

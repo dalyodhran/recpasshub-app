@@ -8,8 +8,8 @@ export interface AuthUser {
 }
 
 export interface IAuthService {
-  login(email?: string): Promise<void>;
-  signup?(email?: string): Promise<void>;
+  login(email?: string, selectedRole?: string): Promise<void>;
+  signup?(email?: string, selectedRole?: string): Promise<void>;
   logout(): Promise<void>;
   getUser(): Promise<AuthUser | null>;
   getAccessToken(): Promise<string | null>;

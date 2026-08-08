@@ -11,6 +11,28 @@ import {
 
 const TOKEN_STORAGE_KEY = 'recpasshub_auth_access_token';
 const ID_TOKEN_STORAGE_KEY = 'recpasshub_auth_id_token';
+const INTENDED_ROLE_KEY = 'recpasshub_intended_role';
+
+async function storeIntendedRole(role: string): Promise<void> {
+  if (Platform.OS === 'web') {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(INTENDED_ROLE_KEY, role);
+  } else {
+    await SecureStore.setItemAsync(INTENDED_ROLE_KEY, role);
+  }
+}
+
+async function retrieveIntendedRole(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    if (typeof localStorage !== 'undefined') return localStorage.getItem(INTENDED_ROLE_KEY);
+    return null;
+  } else {
+    try {
+      return await SecureStore.getItemAsync(INTENDED_ROLE_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+}
 
 async function storeToken(token: string, idToken?: string): Promise<void> {
   if (Platform.OS === 'web') {
@@ -111,16 +133,34 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 }
 
 export class KeycloakProvider implements IAuthService {
-  public async login(email?: string): Promise<void> {
+  public async login(email?: string, selectedRole?: string): Promise<void> {
     console.log(`KeycloakProvider: Initiating real Keycloak OIDC login flow${email ? ` for ${email}` : ''}...`);
+    if (selectedRole) {
+      await storeIntendedRole(selectedRole.toUpperCase());
+    }
+
     const tokens = await loginWithKeycloak(email);
     if (tokens?.accessToken) {
+      // Security Validation: Immediately verify if they actually got the Organizer role they requested!
+      if (selectedRole?.toLowerCase() === 'organizer') {
+        const payload = decodeJwtPayload(tokens.accessToken);
+        const realmAccess = payload?.realm_access as { roles?: unknown } | undefined;
+        const roles: string[] = Array.isArray(realmAccess?.roles) ? (realmAccess.roles as string[]) : [];
+        
+        if (!roles.includes('app-organizer') && !roles.includes('ORGANIZER') && !roles.includes('organizer')) {
+          throw new Error("Access Denied: Your account does not have Organizer permissions. Please log in as an Attendee.");
+        }
+      }
+
       await storeToken(tokens.accessToken, tokens.idToken);
     }
   }
 
-  public async signup(email?: string): Promise<void> {
+  public async signup(email?: string, selectedRole?: string): Promise<void> {
     console.log(`KeycloakProvider: Initiating Keycloak registration flow${email ? ` for ${email}` : ''}...`);
+    if (selectedRole) {
+      await storeIntendedRole(selectedRole.toUpperCase());
+    }
     await registerWithKeycloak(email);
   }
 
@@ -177,10 +217,14 @@ export class KeycloakProvider implements IAuthService {
     const roles: string[] = Array.isArray(realmAccess?.roles)
       ? (realmAccess.roles as string[])
       : [];
+    
+    const intendedRole = await retrieveIntendedRole();
     let role: Role = 'ATTENDEE';
 
-    if (roles.includes('app-organizer') || roles.includes('ORGANIZER') || roles.includes('organizer')) {
+    if (intendedRole === 'ORGANIZER' && (roles.includes('app-organizer') || roles.includes('ORGANIZER') || roles.includes('organizer'))) {
       role = 'ORGANIZER';
+    } else if (intendedRole === 'ATTENDEE') {
+      role = 'ATTENDEE';
     } else if (roles.includes('app-guest') || roles.includes('GUEST')) {
       role = 'GUEST';
     }
