@@ -22,6 +22,13 @@ export const KEYCLOAK_CONFIG = {
     "http://localhost:9080/realms/jhipster/protocol/openid-connect/logout",
 };
 
+export function getClientIdForRole(role?: string | null): string {
+  if (role?.toLowerCase() === 'organizer') {
+    return 'rec-pass-organizer';
+  }
+  return 'rec-pass-attendee';
+}
+
 export function getRedirectUri(): string {
   if (Platform.OS === "web") {
     if (typeof window !== "undefined" && window.location) {
@@ -34,10 +41,12 @@ export function getRedirectUri(): string {
 
 export async function loginWithKeycloak(
   emailHint?: string,
+  selectedRole?: string | null,
 ): Promise<AuthTokens | null> {
   const redirectUri = getRedirectUri();
+  const clientId = getClientIdForRole(selectedRole);
   let authUrl = `${KEYCLOAK_CONFIG.authEndpoint}?client_id=${encodeURIComponent(
-    KEYCLOAK_CONFIG.clientId,
+    clientId,
   )}&response_type=code&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent(redirectUri)}&prompt=login`;
 
   if (emailHint && emailHint.trim()) {
@@ -54,16 +63,20 @@ export async function loginWithKeycloak(
     const urlObj = new URL(result.url);
     const code = urlObj.searchParams.get("code");
     if (code) {
-      return exchangeCodeForToken(code, redirectUri);
+      return exchangeCodeForToken(code, redirectUri, selectedRole);
     }
   }
   return null;
 }
 
-export async function registerWithKeycloak(emailHint?: string): Promise<void> {
+export async function registerWithKeycloak(
+  emailHint?: string,
+  selectedRole?: string | null,
+): Promise<void> {
   const redirectUri = getRedirectUri();
+  const clientId = getClientIdForRole(selectedRole);
   let registerUrl = `${KEYCLOAK_CONFIG.registerEndpoint}?client_id=${encodeURIComponent(
-    KEYCLOAK_CONFIG.clientId,
+    clientId,
   )}&response_type=code&scope=openid%20profile%20email&redirect_uri=${encodeURIComponent(redirectUri)}&prompt=login`;
 
   if (emailHint && emailHint.trim()) {
@@ -81,10 +94,12 @@ export async function registerWithKeycloak(emailHint?: string): Promise<void> {
 export async function exchangeCodeForToken(
   code: string,
   redirectUri: string,
+  selectedRole?: string | null,
 ): Promise<AuthTokens> {
+  const clientId = getClientIdForRole(selectedRole);
   const params = new URLSearchParams({
     grant_type: "authorization_code",
-    client_id: KEYCLOAK_CONFIG.clientId,
+    client_id: clientId,
     code,
     redirect_uri: redirectUri,
   });
@@ -117,10 +132,11 @@ export async function fetchUserInfo(accessToken: string): Promise<UserProfile> {
   return res.json();
 }
 
-export async function logoutFromKeycloak(idToken?: string | null): Promise<void> {
+export async function logoutFromKeycloak(idToken?: string | null, selectedRole?: string | null): Promise<void> {
   const redirectUri = getRedirectUri();
+  const clientId = getClientIdForRole(selectedRole);
   let logoutUrl = `${KEYCLOAK_CONFIG.logoutEndpoint}?client_id=${encodeURIComponent(
-    KEYCLOAK_CONFIG.clientId,
+    clientId,
   )}&post_logout_redirect_uri=${encodeURIComponent(redirectUri)}`;
 
   if (idToken) {

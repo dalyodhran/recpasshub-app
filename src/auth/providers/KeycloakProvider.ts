@@ -91,7 +91,8 @@ async function retrieveToken(): Promise<string | null> {
         const newUrl = window.location.pathname + window.location.hash;
         window.history.replaceState({}, document.title, newUrl);
 
-        const tokens = await exchangeCodeForToken(code, getRedirectUri());
+        const intendedRole = await retrieveIntendedRole();
+        const tokens = await exchangeCodeForToken(code, getRedirectUri(), intendedRole);
         if (tokens?.accessToken) {
           await storeToken(tokens.accessToken, tokens.idToken);
           return tokens.accessToken;
@@ -139,7 +140,7 @@ export class KeycloakProvider implements IAuthService {
       await storeIntendedRole(selectedRole.toUpperCase());
     }
 
-    const tokens = await loginWithKeycloak(email);
+    const tokens = await loginWithKeycloak(email, selectedRole);
     if (tokens?.accessToken) {
       // Security Validation: Immediately verify if they actually got the Organizer role they requested!
       if (selectedRole?.toLowerCase() === 'organizer') {
@@ -161,15 +162,16 @@ export class KeycloakProvider implements IAuthService {
     if (selectedRole) {
       await storeIntendedRole(selectedRole.toUpperCase());
     }
-    await registerWithKeycloak(email);
+    await registerWithKeycloak(email, selectedRole);
   }
 
   public async logout(): Promise<void> {
     console.log('KeycloakProvider: Logging out from Keycloak server session and purging stored tokens...');
     const idToken = await retrieveIdToken();
+    const intendedRole = await retrieveIntendedRole();
     await removeToken();
     try {
-      await logoutFromKeycloak(idToken);
+      await logoutFromKeycloak(idToken, intendedRole);
     } catch (error) {
       console.error('KeycloakProvider: Failed during Keycloak end-session logout:', error);
     }
