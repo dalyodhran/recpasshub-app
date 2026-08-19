@@ -180,21 +180,6 @@ export default function OrganizerDashboard() {
           </Text>
         </View>
       </View>
-
-      {/* Temporary Logout Button for Testing */}
-      <View style={{ padding: 16, alignItems: "center", marginBottom: 40 }}>
-        <Pressable
-          onPress={logout}
-          style={{
-            paddingVertical: 12,
-            paddingHorizontal: 24,
-            backgroundColor: outlineColor,
-            borderRadius: 8,
-          }}
-        >
-          <Text style={{ color: textColor, fontWeight: "bold" }}>Log Out</Text>
-        </Pressable>
-      </View>
     </ScrollView>
   );
 }
