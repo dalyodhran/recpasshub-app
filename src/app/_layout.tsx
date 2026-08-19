@@ -34,6 +34,7 @@ function RootLayoutNav() {
       currentSegment === "(organizer)" ||
       currentSegment === "event" ||
       currentSegment === "pass" ||
+      currentSegment === "message" ||
       currentSegment === "notifications";
     const onLoginScreen =
       !currentSegment || currentSegment === "index" || currentSegment === "";
