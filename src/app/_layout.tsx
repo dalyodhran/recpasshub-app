@@ -19,7 +19,7 @@ const keycloakProvider = new KeycloakProvider();
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -31,18 +31,26 @@ function RootLayoutNav() {
     const currentSegment = (segments as string[])[0];
     const inAuthGroup =
       currentSegment === "(tabs)" ||
+      currentSegment === "(organizer)" ||
       currentSegment === "event" ||
       currentSegment === "pass" ||
       currentSegment === "notifications";
     const onLoginScreen =
       !currentSegment || currentSegment === "index" || currentSegment === "";
 
-    // If authenticated and currently sitting on the login screen, jump directly to tabs!
+    // If authenticated and currently sitting on the login screen, jump directly to appropriate section
     if (isAuthenticated && onLoginScreen) {
-      console.log(
-        "📍 [Router] Valid session detected on login screen. Redirecting to /(tabs)/explore...",
-      );
-      router.replace("/(tabs)/explore");
+      if (user?.role === "ORGANIZER") {
+        console.log(
+          "📍 [Router] Valid Organizer session detected. Redirecting to /(organizer)/dashboard...",
+        );
+        router.replace("/(organizer)/dashboard");
+      } else {
+        console.log(
+          "📍 [Router] Valid Attendee session detected. Redirecting to /(tabs)/explore...",
+        );
+        router.replace("/(tabs)/explore");
+      }
     }
     // If NOT authenticated and trying to access an internal protected page, send back to login.
     else if (!isAuthenticated && inAuthGroup) {
@@ -51,7 +59,7 @@ function RootLayoutNav() {
       );
       router.replace("/");
     }
-  }, [isAuthenticated, isLoading, segments, router]);
+  }, [isAuthenticated, isLoading, user, segments, router]);
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -59,6 +67,7 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(organizer)" />
       </Stack>
     </ThemeProvider>
   );
