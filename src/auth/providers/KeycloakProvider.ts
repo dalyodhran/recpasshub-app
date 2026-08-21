@@ -7,10 +7,12 @@ import {
   logoutFromKeycloak,
   exchangeCodeForToken,
   getRedirectUri,
+  refreshKeycloakToken,
 } from '@/services/keycloak';
 
 const TOKEN_STORAGE_KEY = 'recpasshub_auth_access_token';
 const ID_TOKEN_STORAGE_KEY = 'recpasshub_auth_id_token';
+const REFRESH_TOKEN_STORAGE_KEY = 'recpasshub_auth_refresh_token';
 const INTENDED_ROLE_KEY = 'recpasshub_intended_role';
 
 async function storeIntendedRole(role: string): Promise<void> {
@@ -34,17 +36,19 @@ async function retrieveIntendedRole(): Promise<string | null> {
   }
 }
 
-async function storeToken(token: string, idToken?: string): Promise<void> {
+async function storeToken(token: string, idToken?: string, refreshToken?: string): Promise<void> {
   if (Platform.OS === 'web') {
     console.log('🌐 [TokenStorage] Storing token in web localStorage...');
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(TOKEN_STORAGE_KEY, token);
       if (idToken) localStorage.setItem(ID_TOKEN_STORAGE_KEY, idToken);
+      if (refreshToken) localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
     }
   } else {
     console.log('🔐 [SecureStore] Calling SecureStore.setItemAsync to persist token securely on native hardware...');
     await SecureStore.setItemAsync(TOKEN_STORAGE_KEY, token);
     if (idToken) await SecureStore.setItemAsync(ID_TOKEN_STORAGE_KEY, idToken);
+    if (refreshToken) await SecureStore.setItemAsync(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
     console.log('✅ [SecureStore] Token successfully written to native SecureStore!');
   }
 }
@@ -55,11 +59,13 @@ async function removeToken(): Promise<void> {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem(TOKEN_STORAGE_KEY);
       localStorage.removeItem(ID_TOKEN_STORAGE_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
     }
   } else {
     console.log('🗑️ [SecureStore] Calling SecureStore.deleteItemAsync to purge token from native storage...');
     await SecureStore.deleteItemAsync(TOKEN_STORAGE_KEY);
     await SecureStore.deleteItemAsync(ID_TOKEN_STORAGE_KEY);
+    await SecureStore.deleteItemAsync(REFRESH_TOKEN_STORAGE_KEY);
     console.log('☑️ [SecureStore] Token successfully purged from SecureStore!');
   }
 }
@@ -73,6 +79,21 @@ async function retrieveIdToken(): Promise<string | null> {
   } else {
     try {
       return await SecureStore.getItemAsync(ID_TOKEN_STORAGE_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+}
+
+async function retrieveRefreshToken(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+    }
+    return null;
+  } else {
+    try {
+      return await SecureStore.getItemAsync(REFRESH_TOKEN_STORAGE_KEY);
     } catch (e) {
       return null;
     }
@@ -94,7 +115,7 @@ async function retrieveToken(): Promise<string | null> {
         const intendedRole = await retrieveIntendedRole();
         const tokens = await exchangeCodeForToken(code, getRedirectUri(), intendedRole);
         if (tokens?.accessToken) {
-          await storeToken(tokens.accessToken, tokens.idToken);
+          await storeToken(tokens.accessToken, tokens.idToken, tokens.refreshToken);
           return tokens.accessToken;
         }
       } catch (error) {
@@ -153,7 +174,7 @@ export class KeycloakProvider implements IAuthService {
         }
       }
 
-      await storeToken(tokens.accessToken, tokens.idToken);
+      await storeToken(tokens.accessToken, tokens.idToken, tokens.refreshToken);
     }
   }
 
@@ -177,21 +198,47 @@ export class KeycloakProvider implements IAuthService {
     }
   }
 
+  public async refreshToken(): Promise<boolean> {
+    const refreshToken = await retrieveRefreshToken();
+    if (!refreshToken) return false;
+
+    try {
+      const intendedRole = await retrieveIntendedRole();
+      const tokens = await refreshKeycloakToken(refreshToken, intendedRole);
+      if (tokens?.accessToken) {
+        await storeToken(tokens.accessToken, tokens.idToken, tokens.refreshToken);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('KeycloakProvider: Failed to refresh token:', error);
+      await removeToken();
+      return false;
+    }
+  }
+
   public async getAccessToken(): Promise<string | null> {
-    const token = await retrieveToken();
+    let token = await retrieveToken();
     if (!token) return null;
 
-    const payload = decodeJwtPayload(token);
+    let payload = decodeJwtPayload(token);
     if (!payload || typeof payload.exp !== 'number') {
       await removeToken();
       return null;
     }
 
-    // Automatically purge and reject token if expiration time has passed
-    if (Date.now() >= payload.exp * 1000) {
-      console.warn('⚠️ [SecureStore] Stored token has expired! Purging storage and requiring login.');
-      await removeToken();
-      return null;
+    // Automatically attempt to refresh token if expiration time is within 30 seconds
+    if (Date.now() >= (payload.exp * 1000) - 30000) {
+      console.log('🔄 [KeycloakProvider] Access token expired or expiring soon, attempting refresh...');
+      const success = await this.refreshToken();
+      if (success) {
+        token = await retrieveToken();
+        payload = token ? decodeJwtPayload(token) : null;
+      } else {
+        console.warn('⚠️ [KeycloakProvider] Token refresh failed! Purging storage and requiring login.');
+        await removeToken();
+        return null;
+      }
     }
 
     return token;

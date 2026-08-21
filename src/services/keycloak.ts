@@ -124,6 +124,37 @@ export async function exchangeCodeForToken(
   };
 }
 
+export async function refreshKeycloakToken(
+  refreshToken: string,
+  selectedRole?: string | null,
+): Promise<AuthTokens> {
+  const clientId = getClientIdForRole(selectedRole);
+  const params = new URLSearchParams({
+    grant_type: "refresh_token",
+    client_id: clientId,
+    refresh_token: refreshToken,
+  });
+
+  const res = await fetch(KEYCLOAK_CONFIG.tokenEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString(),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Token refresh failed: ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  return {
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token,
+    idToken: data.id_token,
+    expiresIn: data.expires_in,
+    tokenType: data.token_type,
+  };
+}
+
 export async function fetchUserInfo(accessToken: string): Promise<UserProfile> {
   const res = await fetch(KEYCLOAK_CONFIG.userInfoEndpoint, {
     headers: { Authorization: `Bearer ${accessToken}` },

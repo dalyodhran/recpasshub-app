@@ -14,4 +14,5 @@ export interface IAuthService {
   getUser(): Promise<AuthUser | null>;
   getAccessToken(): Promise<string | null>;
   getTokenExpiry?(): Promise<number | null>; // Returns expiration timestamp in milliseconds
+  refreshToken?(): Promise<boolean>; // Returns true if refresh succeeded
 }

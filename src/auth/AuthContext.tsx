@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
     }
   }, [authService]);
 
-  // Proactive Session Timer: schedules automatic session cleanup when token expires
+  // Proactive Session Timer: schedules automatic session refresh before token expires
   useEffect(() => {
     if (!user || !authService.getTokenExpiry) return;
 
@@ -125,16 +125,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         const expiryTime = await authService.getTokenExpiry!();
         if (!expiryTime) return;
 
-        const timeRemaining = expiryTime - Date.now();
-        if (timeRemaining <= 0) {
-          console.log('AuthProvider: Token already expired. Logging out automatically.');
+        // Schedule refresh 30 seconds before expiration
+        const timeRemaining = (expiryTime - Date.now()) - 30000;
+        
+        const handleExpiry = async () => {
+          if (authService.refreshToken) {
+            console.log('AuthProvider: Token expiring soon. Attempting automatic refresh...');
+            const success = await authService.refreshToken();
+            if (success) {
+              console.log('AuthProvider: Token refreshed successfully. Rescheduling timer...');
+              scheduleExpiryCheck();
+              return;
+            }
+          }
+          console.log('AuthProvider: Token expired and could not be refreshed. Logging out automatically.');
           await logout();
+        };
+
+        if (timeRemaining <= 0) {
+          await handleExpiry();
         } else {
-          console.log(`AuthProvider: Scheduling automatic session cleanup in ${Math.round(timeRemaining / 1000)}s.`);
-          timer = setTimeout(async () => {
-            console.log('AuthProvider: Token expired during active session. Logging out automatically.');
-            await logout();
-          }, timeRemaining);
+          console.log(`AuthProvider: Scheduling automatic session refresh in ${Math.round(timeRemaining / 1000)}s.`);
+          timer = setTimeout(handleExpiry, timeRemaining);
         }
       } catch (err) {
         console.error('AuthProvider: Error scheduling token expiry check:', err);
