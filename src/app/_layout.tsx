@@ -13,6 +13,7 @@ import { useColorScheme } from "react-native";
 import { AnimatedSplashOverlay } from "@/components/ui/animated-icon";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 import { KeycloakProvider } from "@/auth/providers/KeycloakProvider";
+import { EventProvider } from "@/context/event-context";
 
 const keycloakProvider = new KeycloakProvider();
 
@@ -78,7 +79,9 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <AuthProvider authService={keycloakProvider}>
-      <RootLayoutNav />
+      <EventProvider>
+        <RootLayoutNav />
+      </EventProvider>
     </AuthProvider>
   );
 }

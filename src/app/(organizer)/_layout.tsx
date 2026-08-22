@@ -3,12 +3,14 @@ import { useColorScheme, Pressable, View, Text, Modal, StyleSheet, SafeAreaView,
 import { MaterialIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import { useAuth } from "@/auth/AuthContext";
+import { useEventContext } from "@/context/event-context";
 
 export default function OrganizerLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const { logout } = useAuth();
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const { events, selectedEvent, switchEvent } = useEventContext();
 
   // Amber color from the design
   const primaryColor = isDark ? "#f59e0b" : "#d97706";
@@ -19,8 +21,9 @@ export default function OrganizerLayout() {
   const outlineColor = isDark ? "#33353a" : "#dbc2b0";
   const errorColor = "#ba1a1a";
 
-  const DrawerItem = ({ title, subtitle, icon, color, active = false }: any) => (
+  const DrawerItem = ({ title, subtitle, icon, color, active = false, onPress }: any) => (
     <Pressable
+      onPress={onPress}
       style={[
         styles.drawerItem,
         active && { backgroundColor: primaryColor + "20" },
@@ -122,31 +125,20 @@ export default function OrganizerLayout() {
               </View>
 
               <ScrollView style={styles.drawerScroll} contentContainerStyle={{ paddingHorizontal: 8 }}>
-                <DrawerItem
-                  title="Summer League Finals"
-                  subtitle="Aug 15 - 20"
-                  icon="calendar-today"
-                  color={primaryColor}
-                  active={true}
-                />
-                <DrawerItem
-                  title="Golden Gate Sunrise 10K"
-                  subtitle="Sep 02"
-                  icon="calendar-today"
-                  color={textVariantColor}
-                />
-                <DrawerItem
-                  title="Varsity Basketball Tryouts"
-                  subtitle="Oct 12"
-                  icon="calendar-today"
-                  color={textVariantColor}
-                />
-                <DrawerItem
-                  title="City Park 5K"
-                  subtitle="Nov 05"
-                  icon="calendar-today"
-                  color={textVariantColor}
-                />
+                {events.map((event) => (
+                  <DrawerItem
+                    key={event.id}
+                    title={event.title}
+                    subtitle={event.subtitle}
+                    icon={event.icon}
+                    color={selectedEvent.id === event.id ? primaryColor : textVariantColor}
+                    active={selectedEvent.id === event.id}
+                    onPress={() => {
+                      switchEvent(event.id);
+                      setDrawerVisible(false);
+                    }}
+                  />
+                ))}
               </ScrollView>
 
               <View style={[styles.drawerFooter, { borderTopColor: outlineColor }]}>

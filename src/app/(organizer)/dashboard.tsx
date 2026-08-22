@@ -11,9 +11,11 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "@/auth/AuthContext";
 import { Colors } from "@/constants/theme";
+import { useEventContext } from "@/context/event-context";
 
 export default function OrganizerDashboard() {
   const { logout } = useAuth();
+  const { selectedEvent } = useEventContext();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
 
@@ -30,12 +32,12 @@ export default function OrganizerDashboard() {
       {/* Active Event Info */}
       <View style={styles.section}>
         <Text style={[styles.eventTitle, { color: textColor }]}>
-          Varsity Basketball Tryouts
+          {selectedEvent.title}
         </Text>
         <View style={styles.timeRow}>
           <MaterialIcons name="schedule" size={16} color={textVariantColor} />
           <Text style={[styles.eventTime, { color: textVariantColor }]}>
-            Today, 3:00 PM - 5:00 PM
+            {selectedEvent.dateStr}
           </Text>
         </View>
       </View>

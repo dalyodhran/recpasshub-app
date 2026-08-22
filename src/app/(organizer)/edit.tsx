@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,9 +13,20 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
+import { useEventContext } from "@/context/event-context";
+
 export default function EditEvent() {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
+  const { selectedEvent } = useEventContext();
+
+  const [title, setTitle] = useState(selectedEvent.title);
+  const [dateStr, setDateStr] = useState(selectedEvent.dateStr);
+
+  useEffect(() => {
+    setTitle(selectedEvent.title);
+    setDateStr(selectedEvent.dateStr);
+  }, [selectedEvent]);
 
   const primaryColor = isDark ? "#f59e0b" : "#d97706";
   const bgColor = isDark ? "#121212" : "#f8f9ff";
@@ -46,14 +57,16 @@ export default function EditEvent() {
             </View>
             <TextInput 
               style={[styles.titleInput, { color: textColor, borderColor: outlineColor, backgroundColor: bgColor }]}
-              defaultValue="Golden Gate Sunrise 10K"
+              value={title}
+              onChangeText={setTitle}
             />
             
             <View style={styles.inputRow}>
               <MaterialIcons name="calendar-month" size={20} color={textVariantColor} />
               <TextInput 
                 style={[styles.rowInput, { color: textVariantColor, borderColor: outlineColor, backgroundColor: bgColor }]}
-                defaultValue="Saturday, Oct 24 • 6:00 AM"
+                value={dateStr}
+                onChangeText={setDateStr}
               />
             </View>
 
