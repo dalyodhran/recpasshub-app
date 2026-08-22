@@ -12,10 +12,12 @@ import {
   Platform,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 import { useEventContext } from "@/context/event-context";
 
 export default function EditEvent() {
+  const router = useRouter();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
   const { selectedEvent } = useEventContext();
@@ -43,28 +45,28 @@ export default function EditEvent() {
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hero Image */}
         <View style={styles.heroContainer}>
-          <Image 
-            source={{ uri: "https://lh3.googleusercontent.com/aida-public/AB6AXuCf8m5wUoB0A8Q9LaO6eBZ0EXwzeEaa6JUEcFz7OnsubEYHZbyakvPz0Fcvusaxif6_Adw-kjNghmBruHe7vnVwidwHvItjrfQL_hKp4kmOByv14MBJxPWTl48oh4QqgOmuTexeCNI5KqHuO_HEevnyBfdXY6GxUISmHlqutptQv4CZFVwQvdL7IA8V3l6wimaGRK-3TbSjxpVozNUc7hfYZDlkeTUCUUNq_jej29WZe8fTxWOMMVjj8w" }} 
-            style={styles.heroImage} 
+          <Image
+            source={{ uri: "https://images.unsplash.com/photo-1574629810360-7efbb1b379e0?auto=format&fit=crop&q=80&w=2000" }}
+            style={styles.heroImage}
           />
         </View>
 
         <View style={styles.contentContainer}>
-          {/* Event Header */}
+          {/* Main Edit Form */}
           <View style={[styles.headerCard, { backgroundColor: surfaceColor, borderColor: outlineColor }]}>
             <View style={[styles.badge, { backgroundColor: primaryColor }]}>
-              <Text style={styles.badgeText}>RUNNING</Text>
+              <Text style={styles.badgeText}>DRAFT</Text>
             </View>
             <TextInput 
-              style={[styles.titleInput, { color: textColor, borderColor: outlineColor, backgroundColor: bgColor }]}
+              style={[styles.titleInput, { color: textColor, borderColor: outlineColor, backgroundColor: bgColor }]} 
               value={title}
               onChangeText={setTitle}
             />
-            
+
             <View style={styles.inputRow}>
-              <MaterialIcons name="calendar-month" size={20} color={textVariantColor} />
+              <MaterialIcons name="calendar-today" size={20} color={textVariantColor} />
               <TextInput 
-                style={[styles.rowInput, { color: textVariantColor, borderColor: outlineColor, backgroundColor: bgColor }]}
+                style={[styles.rowInput, { color: textVariantColor, borderColor: outlineColor, backgroundColor: bgColor }]} 
                 value={dateStr}
                 onChangeText={setDateStr}
               />
@@ -154,8 +156,11 @@ export default function EditEvent() {
 
       {/* Sticky Bottom Actions */}
       <View style={[styles.bottomBar, { backgroundColor: surfaceColor, borderTopColor: outlineColor }]}>
-        <Pressable style={[styles.saveBtn, { backgroundColor: primaryColor }]}>
-          <Text style={styles.saveBtnText}>Save Changes</Text>
+        <Pressable 
+          style={[styles.saveBtn, { backgroundColor: primaryColor }]}
+          onPress={() => router.push(`/studio?id=${selectedEvent.id}&step=5`)}
+        >
+          <Text style={styles.saveBtnText}>Publish Changes</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -297,7 +302,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 16,
-    paddingBottom: 32, // safe area approximation
+    paddingBottom: 32,
     borderTopWidth: 1,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },
