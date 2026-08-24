@@ -72,7 +72,7 @@ export async function loginWithKeycloak(
 export async function registerWithKeycloak(
   emailHint?: string,
   selectedRole?: string | null,
-): Promise<void> {
+): Promise<AuthTokens | null> {
   const redirectUri = getRedirectUri();
   const clientId = getClientIdForRole(selectedRole);
   let registerUrl = `${KEYCLOAK_CONFIG.registerEndpoint}?client_id=${encodeURIComponent(
@@ -85,10 +85,18 @@ export async function registerWithKeycloak(
 
   if (Platform.OS === "web") {
     window.location.href = registerUrl;
-    return;
+    return null;
   }
 
-  await WebBrowser.openAuthSessionAsync(registerUrl, redirectUri);
+  const result = await WebBrowser.openAuthSessionAsync(registerUrl, redirectUri);
+  if (result.type === "success" && result.url) {
+    const urlObj = new URL(result.url);
+    const code = urlObj.searchParams.get("code");
+    if (code) {
+      return exchangeCodeForToken(code, redirectUri, selectedRole);
+    }
+  }
+  return null;
 }
 
 export async function exchangeCodeForToken(

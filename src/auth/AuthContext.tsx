@@ -7,6 +7,8 @@ import React, {
   useMemo,
 } from "react";
 import { AuthUser, IAuthService } from "./types";
+import { loadUser } from "@/api/user/loadUser";
+import { registerUser } from "@/api/user/registerUser";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -40,9 +42,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         if (isMounted) {
           if (token) {
             const authUser = await authService.getUser();
-            if (isMounted) setUser(authUser);
+            if (authUser) {
+              try {
+                const backendUser = await loadUser(token);
+                if (isMounted) setUser({ ...authUser, ...backendUser });
+              } catch (err) {
+                console.error("Failed to fetch backend user data:", err);
+                if (isMounted) setUser(authUser);
+              }
+            } else {
+              if (isMounted) setUser(null);
+            }
           } else {
-            setUser(null);
+            if (isMounted) setUser(null);
           }
         }
       } catch (error) {
@@ -69,7 +81,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       const token = await authService.getAccessToken();
       if (token) {
         const authUser = await authService.getUser();
-        setUser(authUser);
+        if (authUser) {
+          try {
+            const backendUser = await loadUser(token);
+            setUser({ ...authUser, ...backendUser });
+          } catch (err) {
+            console.error("Failed to fetch backend user data:", err);
+            setUser(authUser);
+          }
+        } else {
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
@@ -92,7 +114,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
       const token = await authService.getAccessToken();
       if (token) {
         const authUser = await authService.getUser();
-        setUser(authUser);
+        if (authUser) {
+          try {
+            const backendUser = await registerUser(token);
+            setUser({ ...authUser, ...backendUser });
+          } catch (err) {
+            console.error("Failed to register user in backend:", err);
+            setUser(authUser);
+          }
+        } else {
+          setUser(null);
+        }
       } else {
         setUser(null);
       }

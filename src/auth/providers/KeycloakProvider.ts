@@ -166,10 +166,9 @@ export class KeycloakProvider implements IAuthService {
       // Security Validation: Immediately verify if they actually got the Organizer role they requested!
       if (selectedRole?.toLowerCase() === 'organizer') {
         const payload = decodeJwtPayload(tokens.accessToken);
-        const realmAccess = payload?.realm_access as { roles?: unknown } | undefined;
-        const roles: string[] = Array.isArray(realmAccess?.roles) ? (realmAccess.roles as string[]) : [];
+        const customUserType = payload?.['custom:user_type'] as string | undefined;
         
-        if (!roles.includes('app-organizer') && !roles.includes('ORGANIZER') && !roles.includes('organizer')) {
+        if (customUserType?.toLowerCase() !== 'organizer') {
           throw new Error("Access Denied: Your account does not have Organizer permissions. Please log in as an Attendee.");
         }
       }
@@ -183,7 +182,10 @@ export class KeycloakProvider implements IAuthService {
     if (selectedRole) {
       await storeIntendedRole(selectedRole.toUpperCase());
     }
-    await registerWithKeycloak(email, selectedRole);
+    const tokens = await registerWithKeycloak(email, selectedRole);
+    if (tokens?.accessToken) {
+      await storeToken(tokens.accessToken, tokens.idToken, tokens.refreshToken);
+    }
   }
 
   public async logout(): Promise<void> {
@@ -262,19 +264,14 @@ export class KeycloakProvider implements IAuthService {
     const payload = decodeJwtPayload(token);
     if (!payload) return null;
 
-    const realmAccess = payload.realm_access as { roles?: unknown } | undefined;
-    const roles: string[] = Array.isArray(realmAccess?.roles)
-      ? (realmAccess.roles as string[])
-      : [];
+    const customUserType = payload['custom:user_type'] as string | undefined;
     
-    const intendedRole = await retrieveIntendedRole();
     let role: Role = 'ATTENDEE';
-
-    if (intendedRole === 'ORGANIZER' && (roles.includes('app-organizer') || roles.includes('ORGANIZER') || roles.includes('organizer'))) {
+    if (customUserType?.toLowerCase() === 'organizer') {
       role = 'ORGANIZER';
-    } else if (intendedRole === 'ATTENDEE') {
+    } else if (customUserType?.toLowerCase() === 'attendee') {
       role = 'ATTENDEE';
-    } else if (roles.includes('app-guest') || roles.includes('GUEST')) {
+    } else if (customUserType?.toLowerCase() === 'guest') {
       role = 'GUEST';
     }
 

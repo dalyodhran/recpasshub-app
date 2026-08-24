@@ -5,6 +5,10 @@ export interface AuthUser {
   email: string;
   name?: string;
   role: Role;
+  firstName?: string;
+  lastName?: string;
+  type?: string;
+  joinedAt?: string;
 }
 
 export interface IAuthService {
