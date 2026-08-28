@@ -1,5 +1,14 @@
 import { Tabs, useRouter } from "expo-router";
-import { useColorScheme, Pressable, View, Text, Modal, StyleSheet, SafeAreaView, ScrollView } from "react-native";
+import {
+  useColorScheme,
+  Pressable,
+  View,
+  Text,
+  Modal,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+} from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useState } from "react";
 import { useAuth } from "@/auth/AuthContext";
@@ -11,7 +20,8 @@ export default function OrganizerLayout() {
   const isDark = colorScheme === "dark";
   const { logout } = useAuth();
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const { events, selectedEvent, switchEvent, saveDraft, deleteEvent } = useEventContext();
+  const { events, selectedEvent, switchEvent, saveDraft, deleteEvent } =
+    useEventContext();
 
   // Amber color from the design
   const primaryColor = isDark ? "#f59e0b" : "#d97706";
@@ -22,7 +32,15 @@ export default function OrganizerLayout() {
   const outlineColor = isDark ? "#33353a" : "#dbc2b0";
   const errorColor = "#ba1a1a";
 
-  const DrawerItem = ({ title, subtitle, icon, color, active = false, onPress, onDelete }: any) => (
+  const DrawerItem = ({
+    title,
+    subtitle,
+    icon,
+    color,
+    active = false,
+    onPress,
+    onDelete,
+  }: any) => (
     <View style={{ flexDirection: "row", alignItems: "center" }}>
       <Pressable
         onPress={onPress}
@@ -34,11 +52,22 @@ export default function OrganizerLayout() {
       >
         <MaterialIcons name={icon} size={24} color={color} />
         <View style={styles.drawerItemTextContainer}>
-          <Text style={[styles.drawerItemTitle, { color }, active && { fontWeight: "bold" }]}>
+          <Text
+            style={[
+              styles.drawerItemTitle,
+              { color },
+              active && { fontWeight: "bold" },
+            ]}
+          >
             {title}
           </Text>
           {subtitle && (
-            <Text style={[styles.drawerItemSubtitle, { color: active ? color : textVariantColor }]}>
+            <Text
+              style={[
+                styles.drawerItemSubtitle,
+                { color: active ? color : textVariantColor },
+              ]}
+            >
               {subtitle}
             </Text>
           )}
@@ -63,7 +92,10 @@ export default function OrganizerLayout() {
           tabBarActiveTintColor: primaryColor,
           tabBarStyle: { backgroundColor: bgColor },
           headerLeft: () => (
-            <Pressable style={{ marginLeft: 16 }} onPress={() => setDrawerVisible(true)}>
+            <Pressable
+              style={{ marginLeft: 16 }}
+              onPress={() => setDrawerVisible(true)}
+            >
               <MaterialIcons name="menu" size={24} color="#ffffff" />
             </Pressable>
           ),
@@ -127,64 +159,121 @@ export default function OrganizerLayout() {
       {/* Drawer Overlay */}
       <Modal visible={drawerVisible} animationType="fade" transparent={true}>
         <View style={styles.modalOverlay}>
-          <Pressable style={styles.modalBackdrop} onPress={() => setDrawerVisible(false)} />
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setDrawerVisible(false)}
+          />
           <View style={[styles.drawerContainer, { backgroundColor: drawerBg }]}>
             <SafeAreaView style={{ flex: 1 }}>
               <View style={styles.drawerHeader}>
-                <Text style={[styles.drawerTitle, { color: primaryColor }]}>Organizer Menu</Text>
-                <Pressable onPress={() => setDrawerVisible(false)} style={styles.closeButton}>
+                <Text style={[styles.drawerTitle, { color: primaryColor }]}>
+                  Organizer Menu
+                </Text>
+                <Pressable
+                  onPress={() => setDrawerVisible(false)}
+                  style={styles.closeButton}
+                >
                   <MaterialIcons name="close" size={24} color={textColor} />
                 </Pressable>
               </View>
 
               <View style={styles.drawerSection}>
-                <Text style={[styles.sectionLabel, { color: textVariantColor }]}>SWITCH EVENT</Text>
+                <Text
+                  style={[styles.sectionLabel, { color: textVariantColor }]}
+                >
+                  SWITCH EVENT
+                </Text>
               </View>
 
-              <ScrollView style={styles.drawerScroll} contentContainerStyle={{ paddingHorizontal: 8 }}>
+              <ScrollView
+                style={styles.drawerScroll}
+                contentContainerStyle={{ paddingHorizontal: 8 }}
+              >
                 {events.map((event) => {
-                  const isDraft = event.status === "DRAFT";
+                  const isDraft = event.state === "DRAFT";
+                  let icon = "calendar-today";
+                  if (event.sportType?.toUpperCase() === "SWIMMING")
+                    icon = "pool";
+                  else if (event.sportType?.toUpperCase() === "RUNNING")
+                    icon = "directions-run";
+                  else if (event.sportType?.toUpperCase() === "CYCLING")
+                    icon = "directions-bike";
+
                   return (
                     <DrawerItem
-                      key={event.id}
-                      title={isDraft ? `${event.title} (Draft)` : event.title}
-                      subtitle={event.subtitle}
-                      icon={event.icon}
-                      color={selectedEvent.id === event.id ? primaryColor : (isDraft ? outlineColor : textVariantColor)}
-                      active={selectedEvent.id === event.id}
+                      key={event.eventGuid}
+                      title={
+                        isDraft ? `${event.eventName} (Draft)` : event.eventName
+                      }
+                      subtitle={
+                        event.startDateTime
+                          ? new Date(event.startDateTime).toLocaleDateString()
+                          : "TBD"
+                      }
+                      icon={icon}
+                      color={
+                        selectedEvent?.eventGuid === event.eventGuid
+                          ? primaryColor
+                          : isDraft
+                            ? outlineColor
+                            : textVariantColor
+                      }
+                      active={selectedEvent?.eventGuid === event.eventGuid}
                       onPress={() => {
-                        if (isDraft) {
-                          setDrawerVisible(false);
-                          router.push(`/studio?id=${event.id}`);
+                        if (event.state === "PUBLISHED") {
+                          router.push("/dashboard");
                         } else {
-                          switchEvent(event.id);
-                          setDrawerVisible(false);
+                          router.push(`/studio?id=${event.eventGuid}`);
                         }
+                        setDrawerVisible(false);
+                        switchEvent(event.eventGuid!);
                       }}
-                      onDelete={isDraft ? () => deleteEvent(event.id) : undefined}
+                      onDelete={
+                        isDraft
+                          ? () => deleteEvent(event.eventGuid!)
+                          : undefined
+                      }
                     />
                   );
                 })}
               </ScrollView>
 
-              <View style={[styles.drawerFooter, { borderTopColor: outlineColor }]}>
-                <DrawerItem 
-                  title="Create New Event" 
-                  icon="add-circle" 
-                  color={textVariantColor} 
-                  onPress={() => {
+              <View
+                style={[styles.drawerFooter, { borderTopColor: outlineColor }]}
+              >
+                <DrawerItem
+                  title="Create New Event"
+                  icon="add-circle"
+                  color={textVariantColor}
+                  onPress={async () => {
                     const newDraftId = `draft-${Date.now()}`;
-                    saveDraft({ id: newDraftId, title: "Untitled Event", status: "DRAFT" });
+                    const savedEvent = await saveDraft({
+                      eventGuid: newDraftId,
+                      eventName: "Untitled Event",
+                      state: "DRAFT",
+                    });
                     setDrawerVisible(false);
-                    router.push(`/studio?id=${newDraftId}`);
+                    const navId = savedEvent?.eventGuid || newDraftId;
+                    router.push(`/studio?id=${navId}`);
                   }}
                 />
-                <DrawerItem title="Organization Settings" icon="settings" color={textVariantColor} />
-                
-                <Pressable style={[styles.drawerItem, { marginTop: 4 }]} onPress={logout}>
+                <DrawerItem
+                  title="Organization Settings"
+                  icon="settings"
+                  color={textVariantColor}
+                />
+
+                <Pressable
+                  style={[styles.drawerItem, { marginTop: 4 }]}
+                  onPress={logout}
+                >
                   <MaterialIcons name="logout" size={24} color={errorColor} />
                   <View style={styles.drawerItemTextContainer}>
-                    <Text style={[styles.drawerItemTitle, { color: errorColor }]}>Log Out</Text>
+                    <Text
+                      style={[styles.drawerItemTitle, { color: errorColor }]}
+                    >
+                      Log Out
+                    </Text>
                   </View>
                 </Pressable>
               </View>

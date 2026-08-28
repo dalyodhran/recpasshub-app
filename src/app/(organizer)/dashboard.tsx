@@ -12,10 +12,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "@/auth/AuthContext";
 import { Colors } from "@/constants/theme";
 import { useEventContext } from "@/context/event-context";
+import EmptyEventState from "@/components/ui/EmptyEventState";
 
 export default function OrganizerDashboard() {
   const { logout } = useAuth();
-  const { selectedEvent } = useEventContext();
+  const { selectedEvent, events } = useEventContext();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
 
@@ -27,17 +28,23 @@ export default function OrganizerDashboard() {
   const textVariantColor = isDark ? "#a0a4ab" : "#554336";
   const outlineColor = isDark ? "#33353a" : "#dbc2b0";
 
+  if (events.length === 0 || !selectedEvent) {
+    return <EmptyEventState />;
+  }
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: bgColor }]}>
       {/* Active Event Info */}
       <View style={styles.section}>
         <Text style={[styles.eventTitle, { color: textColor }]}>
-          {selectedEvent.title}
+          {selectedEvent?.eventName || "Select an Event"}
         </Text>
         <View style={styles.timeRow}>
           <MaterialIcons name="schedule" size={16} color={textVariantColor} />
           <Text style={[styles.eventTime, { color: textVariantColor }]}>
-            {selectedEvent.dateStr}
+            {selectedEvent?.startDateTime
+              ? new Date(selectedEvent.startDateTime).toLocaleString()
+              : "TBD"}
           </Text>
         </View>
       </View>

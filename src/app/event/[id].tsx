@@ -1,18 +1,18 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  SafeAreaView,
-} from "react-native";
-import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import TopAppBar from "@/components/ui/TopAppBar";
+import { Colors } from "@/constants/BoldBlueTheme";
 import { MOCK_EVENTS, myPassIds } from "@/data/mockEvents";
 import { styles } from "@/styles/event-details.styles";
-import { Colors } from "@/constants/BoldBlueTheme";
-import TopAppBar from "@/components/ui/TopAppBar";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  Image,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -46,11 +46,12 @@ export default function EventDetailsScreen() {
   const { id, registered } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  
+
   // Real app would fetch this from a user profile or context
   // Here we use our mock global state for true dynamic updates
-  const isRegisteredParam = registered === 'true';
-  const isRegistered = (typeof id === 'string' && myPassIds.has(id)) || isRegisteredParam;
+  const isRegisteredParam = registered === "true";
+  const isRegistered =
+    (typeof id === "string" && myPassIds.has(id)) || isRegisteredParam;
 
   const event = MOCK_EVENTS.find((e) => e.id === id);
 
@@ -74,10 +75,10 @@ export default function EventDetailsScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ paddingTop: insets.top, backgroundColor: Colors.primary }}>
-        <TopAppBar 
-          title="Rec Pass Hub" 
-          showBackButton={true} 
-          onBackPress={() => router.back()} 
+        <TopAppBar
+          title="Rec Pass Hub"
+          showBackButton={true}
+          onBackPress={() => router.back()}
         />
       </View>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -96,7 +97,11 @@ export default function EventDetailsScreen() {
               </View>
               {isRegistered && (
                 <View style={styles.joinedBadge}>
-                  <MaterialIcons name="check-circle" size={14} color={Colors.onTertiaryContainer} />
+                  <MaterialIcons
+                    name="check-circle"
+                    size={14}
+                    color={Colors.onTertiaryContainer}
+                  />
                   <Text style={styles.joinedBadgeText}>Joined</Text>
                 </View>
               )}
@@ -178,8 +183,8 @@ export default function EventDetailsScreen() {
 
           {/* Description */}
           <View>
-            <Text style={styles.sectionTitle}>About</Text>
-            <Text style={styles.aboutText}>{event.about}</Text>
+            <Text style={styles.sectionTitle}>Description</Text>
+            <Text style={styles.descriptionText}>{event.description}</Text>
           </View>
 
           {/* FAQs Accordion */}
@@ -224,8 +229,8 @@ export default function EventDetailsScreen() {
           </View>
         )}
 
-        <TouchableOpacity 
-          style={styles.joinButton} 
+        <TouchableOpacity
+          style={styles.joinButton}
           activeOpacity={0.8}
           onPress={() => {
             if (isRegistered) {

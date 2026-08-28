@@ -1,7 +1,7 @@
-import { StyleSheet, Dimensions } from 'react-native';
-import { Colors } from '@/constants/BoldBlueTheme';
+import { Colors } from "@/constants/BoldBlueTheme";
+import { Dimensions, StyleSheet } from "react-native";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export const styles = StyleSheet.create({
   container: {
@@ -10,23 +10,23 @@ export const styles = StyleSheet.create({
   },
   // Header / Hero Image
   heroImageContainer: {
-    width: '100%',
+    width: "100%",
     height: 300,
     backgroundColor: Colors.surfaceContainerLow,
-    position: 'relative',
+    position: "relative",
   },
   heroImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   gradientOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(247, 249, 251, 0.4)', // Rough approximation of the gradient to-background
+    backgroundColor: "rgba(247, 249, 251, 0.4)", // Rough approximation of the gradient to-background
     // We can use expo-linear-gradient if available, but a solid overlay or nothing is fine for a mock
   },
   contentContainer: {
@@ -36,7 +36,7 @@ export const styles = StyleSheet.create({
     gap: 24,
     paddingBottom: 100, // padding for sticky bottom actions
   },
-  
+
   // Event Header Card
   headerCard: {
     backgroundColor: Colors.surface,
@@ -44,20 +44,20 @@ export const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: Colors.outlineVariant,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
   badgesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
     gap: 8,
   },
   sportBadge: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     backgroundColor: Colors.primary,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -66,12 +66,12 @@ export const styles = StyleSheet.create({
   sportBadgeText: {
     color: Colors.onPrimary,
     fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontWeight: "600",
+    textTransform: "uppercase",
   },
   joinedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors.tertiaryContainer,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -81,18 +81,18 @@ export const styles = StyleSheet.create({
   joinedBadgeText: {
     color: Colors.onTertiaryContainer,
     fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontWeight: "600",
+    textTransform: "uppercase",
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.onSurface,
     marginBottom: 8,
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 4,
     gap: 8,
   },
@@ -100,19 +100,19 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.onSurfaceVariant,
   },
-  
+
   // Section Headings
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.onSurface,
     marginBottom: 8,
   },
-  
+
   // Stats Grid
   statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 12,
   },
   statCard: {
@@ -122,44 +122,44 @@ export const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: Colors.outlineVariant,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   statIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 88, 190, 0.1)', // Primary / 10%
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "rgba(0, 88, 190, 0.1)", // Primary / 10%
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 8,
   },
   statLabel: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
     color: Colors.onSurfaceVariant,
     marginBottom: 2,
   },
   statValue: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.onSurface,
   },
-  
-  // About
-  aboutText: {
+
+  // Description
+  descriptionText: {
     fontSize: 14,
     lineHeight: 20,
     color: Colors.onSurfaceVariant,
   },
-  
+
   // FAQs
   faqsContainer: {
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.outlineVariant,
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 32,
   },
   faqItem: {
@@ -167,14 +167,14 @@ export const styles = StyleSheet.create({
     borderBottomColor: Colors.outlineVariant,
   },
   faqQuestionBtn: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 16,
   },
   faqQuestionText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     color: Colors.onSurface,
     flex: 1,
   },
@@ -186,19 +186,19 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.onSurfaceVariant,
   },
-  
+
   // Bottom Sticky Actions
   bottomBar: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(247, 249, 251, 0.95)',
+    backgroundColor: "rgba(247, 249, 251, 0.95)",
     borderTopWidth: 1,
     borderTopColor: Colors.outlineVariant,
     padding: 16,
     zIndex: 40,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.05,
     shadowRadius: 12,
@@ -210,14 +210,14 @@ export const styles = StyleSheet.create({
     borderColor: Colors.outlineVariant,
     borderRadius: 8,
     padding: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 12,
   },
   sponsorLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   sponsorIcon: {
@@ -225,34 +225,34 @@ export const styles = StyleSheet.create({
     height: 40,
     backgroundColor: Colors.primary,
     borderRadius: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   sponsorLabel: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.onSurfaceVariant,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   sponsorName: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     color: Colors.onSurface,
   },
   sponsorLink: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
     color: Colors.primary,
   },
   joinButton: {
     backgroundColor: Colors.primary,
     paddingVertical: 16,
     borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -261,6 +261,6 @@ export const styles = StyleSheet.create({
   joinButtonText: {
     color: Colors.onPrimary,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

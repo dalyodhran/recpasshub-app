@@ -11,7 +11,7 @@ export interface EventData {
   elevation: string;
   targetPace: string;
   capacity: string;
-  about: string;
+  description: string;
   faqs: { question: string; answer: string }[];
 }
 
@@ -41,7 +41,7 @@ export const MOCK_EVENTS: EventData[] = [
     elevation: "2,000 ft",
     targetPace: "18-20 mph",
     capacity: "25 / 50",
-    about:
+    description:
       "A fast-paced early morning ride across the Golden Gate Bridge into the Marin Headlands. Expect some climbs and gorgeous sunrise views. Not for beginners.",
     faqs: [
       {
@@ -68,7 +68,7 @@ export const MOCK_EVENTS: EventData[] = [
     elevation: "45 m",
     targetPace: "5:30/km",
     capacity: "50 / 100",
-    about:
+    description:
       "Join us for an invigorating morning run starting at Crissy Field, tracing the coastline with spectacular views of the Golden Gate Bridge as the sun rises. Suitable for intermediate runners aiming for a steady pace. Water stations provided at the halfway mark.",
     faqs: [
       {
@@ -97,7 +97,7 @@ export const MOCK_EVENTS: EventData[] = [
     elevation: "0 m",
     targetPace: "1:30/100m",
     capacity: "15 / 30",
-    about:
+    description:
       "An intense open water swimming session focusing on endurance and sighting. Wetsuits are highly recommended due to the cold bay waters.",
     faqs: [
       {
@@ -124,12 +124,13 @@ export const MOCK_EVENTS: EventData[] = [
     elevation: "1,500 ft",
     targetPace: "8:00/mi",
     capacity: "75 / 150",
-    about:
+    description:
       "A scenic and challenging half marathon through the beautiful Marin Headlands. Get ready for steep climbs and rewarding views of the Pacific Ocean.",
     faqs: [
       {
         question: "Are trail shoes required?",
-        answer: "Yes, trail running shoes are highly recommended due to loose dirt and rocks.",
+        answer:
+          "Yes, trail running shoes are highly recommended due to loose dirt and rocks.",
       },
     ],
   },

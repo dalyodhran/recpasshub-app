@@ -15,20 +15,70 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { useEventContext } from "@/context/event-context";
+import { FAQ } from "@/models/event";
+import EmptyEventState from "@/components/ui/EmptyEventState";
 
 export default function EditEvent() {
   const router = useRouter();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
-  const { selectedEvent } = useEventContext();
+  const { selectedEvent, events, updateEventDetails } = useEventContext();
 
-  const [title, setTitle] = useState(selectedEvent.title);
-  const [dateStr, setDateStr] = useState(selectedEvent.dateStr);
+  const [eventName, setEventName] = useState(selectedEvent?.eventName || "");
+  const [description, setDescription] = useState(
+    selectedEvent?.description || "",
+  );
+  const [faqs, setFaqs] = useState<FAQ[]>(
+    selectedEvent?.frequentlyAskedQuestions || [],
+  );
+  const [dateStr, setDateStr] = useState(
+    selectedEvent?.startDateTime
+      ? new Date(selectedEvent.startDateTime).toLocaleDateString()
+      : "",
+  );
 
   useEffect(() => {
-    setTitle(selectedEvent.title);
-    setDateStr(selectedEvent.dateStr);
+    setEventName(selectedEvent?.eventName || "");
+    setDescription(selectedEvent?.description || "");
+    setDateStr(
+      selectedEvent?.startDateTime
+        ? new Date(selectedEvent.startDateTime).toLocaleDateString()
+        : "",
+    );
+    setFaqs(selectedEvent?.frequentlyAskedQuestions || []);
   }, [selectedEvent]);
+
+  const handleUpdateFaq = (
+    index: number,
+    field: "question" | "answer",
+    value: string,
+  ) => {
+    const newFaqs = [...faqs];
+    newFaqs[index] = { ...newFaqs[index], [field]: value };
+    setFaqs(newFaqs);
+  };
+
+  const handleAddFaq = () => {
+    setFaqs([...faqs, { question: "", answer: "" }]);
+  };
+
+  const handleRemoveFaq = (index: number) => {
+    const newFaqs = [...faqs];
+    newFaqs.splice(index, 1);
+    setFaqs(newFaqs);
+  };
+
+  const handlePublishChanges = async () => {
+    if (selectedEvent) {
+      await updateEventDetails({
+        ...selectedEvent,
+        eventName,
+        description: description,
+        frequentlyAskedQuestions: faqs,
+      });
+    }
+    router.push(`/studio?id=${selectedEvent?.eventGuid || ""}&step=5`);
+  };
 
   const primaryColor = isDark ? "#f59e0b" : "#d97706";
   const bgColor = isDark ? "#121212" : "#f8f9ff";
@@ -37,128 +87,352 @@ export default function EditEvent() {
   const textVariantColor = isDark ? "#a0a4ab" : "#554336";
   const outlineColor = isDark ? "#33353a" : "#dbc2b0";
 
+  if (events.length === 0 || !selectedEvent) {
+    return (
+      <EmptyEventState
+        title="No Event to Edit"
+        message="You don't have any events yet. Create one to start managing your details."
+      />
+    );
+  }
+
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === "ios" ? "padding" : "height"} 
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1, backgroundColor: bgColor }}
     >
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hero Image */}
         <View style={styles.heroContainer}>
           <Image
-            source={{ uri: "https://images.unsplash.com/photo-1574629810360-7efbb1b379e0?auto=format&fit=crop&q=80&w=2000" }}
+            source={{
+              uri: "https://images.unsplash.com/photo-1574629810360-7efbb1b379e0?auto=format&fit=crop&q=80&w=2000",
+            }}
             style={styles.heroImage}
           />
         </View>
 
         <View style={styles.contentContainer}>
           {/* Main Edit Form */}
-          <View style={[styles.headerCard, { backgroundColor: surfaceColor, borderColor: outlineColor }]}>
+          <View
+            style={[
+              styles.headerCard,
+              { backgroundColor: surfaceColor, borderColor: outlineColor },
+            ]}
+          >
             <View style={[styles.badge, { backgroundColor: primaryColor }]}>
-              <Text style={styles.badgeText}>DRAFT</Text>
+              <Text style={styles.badgeText}>
+                {selectedEvent?.state || "DRAFT"}
+              </Text>
             </View>
-            <TextInput 
-              style={[styles.titleInput, { color: textColor, borderColor: outlineColor, backgroundColor: bgColor }]} 
-              value={title}
-              onChangeText={setTitle}
+            <TextInput
+              style={[
+                styles.titleInput,
+                {
+                  color: textColor,
+                  borderColor: outlineColor,
+                  backgroundColor: bgColor,
+                },
+              ]}
+              value={eventName}
+              onChangeText={setEventName}
             />
 
             <View style={styles.inputRow}>
-              <MaterialIcons name="calendar-today" size={20} color={textVariantColor} />
-              <TextInput 
-                style={[styles.rowInput, { color: textVariantColor, borderColor: outlineColor, backgroundColor: bgColor }]} 
+              <MaterialIcons
+                name="calendar-today"
+                size={20}
+                color={textVariantColor}
+              />
+              <TextInput
+                style={[
+                  styles.rowInput,
+                  {
+                    color: textVariantColor,
+                    borderColor: outlineColor,
+                    backgroundColor: bgColor,
+                  },
+                ]}
                 value={dateStr}
                 onChangeText={setDateStr}
               />
             </View>
 
             <View style={styles.inputRow}>
-              <MaterialIcons name="location-on" size={20} color={textVariantColor} />
-              <TextInput 
-                style={[styles.rowInput, { color: textVariantColor, borderColor: outlineColor, backgroundColor: bgColor }]}
+              <MaterialIcons
+                name="location-on"
+                size={20}
+                color={textVariantColor}
+              />
+              <TextInput
+                style={[
+                  styles.rowInput,
+                  {
+                    color: textVariantColor,
+                    borderColor: outlineColor,
+                    backgroundColor: bgColor,
+                  },
+                ]}
                 defaultValue="Crissy Field, San Francisco"
               />
             </View>
           </View>
 
           {/* Stats Grid */}
-          <Text style={[styles.sectionTitle, { color: textColor }]}>Event Details</Text>
+          <Text style={[styles.sectionTitle, { color: textColor }]}>
+            Event Details
+          </Text>
           <View style={styles.statsGrid}>
-            <View style={[styles.statBox, { backgroundColor: surfaceColor, borderColor: outlineColor }]}>
-              <View style={[styles.iconWrapper, { backgroundColor: `${primaryColor}1A` }]}>
-                <MaterialIcons name="straighten" size={24} color={primaryColor} />
+            <View
+              style={[
+                styles.statBox,
+                { backgroundColor: surfaceColor, borderColor: outlineColor },
+              ]}
+            >
+              <View
+                style={[
+                  styles.iconWrapper,
+                  { backgroundColor: `${primaryColor}1A` },
+                ]}
+              >
+                <MaterialIcons
+                  name="straighten"
+                  size={24}
+                  color={primaryColor}
+                />
               </View>
-              <Text style={[styles.statLabel, { color: textVariantColor }]}>Distance</Text>
-              <Text style={[styles.statValue, { color: textColor }]}>10.0 km</Text>
+              <Text style={[styles.statLabel, { color: textVariantColor }]}>
+                Distance
+              </Text>
+              <Text style={[styles.statValue, { color: textColor }]}>
+                10.0 km
+              </Text>
             </View>
-            <View style={[styles.statBox, { backgroundColor: surfaceColor, borderColor: outlineColor }]}>
-              <View style={[styles.iconWrapper, { backgroundColor: `${primaryColor}1A` }]}>
-                <MaterialIcons name="trending-up" size={24} color={primaryColor} />
+            <View
+              style={[
+                styles.statBox,
+                { backgroundColor: surfaceColor, borderColor: outlineColor },
+              ]}
+            >
+              <View
+                style={[
+                  styles.iconWrapper,
+                  { backgroundColor: `${primaryColor}1A` },
+                ]}
+              >
+                <MaterialIcons
+                  name="trending-up"
+                  size={24}
+                  color={primaryColor}
+                />
               </View>
-              <Text style={[styles.statLabel, { color: textVariantColor }]}>Elevation</Text>
+              <Text style={[styles.statLabel, { color: textVariantColor }]}>
+                Elevation
+              </Text>
               <Text style={[styles.statValue, { color: textColor }]}>45 m</Text>
             </View>
-            <View style={[styles.statBox, { backgroundColor: surfaceColor, borderColor: outlineColor }]}>
-              <View style={[styles.iconWrapper, { backgroundColor: `${primaryColor}1A` }]}>
+            <View
+              style={[
+                styles.statBox,
+                { backgroundColor: surfaceColor, borderColor: outlineColor },
+              ]}
+            >
+              <View
+                style={[
+                  styles.iconWrapper,
+                  { backgroundColor: `${primaryColor}1A` },
+                ]}
+              >
                 <MaterialIcons name="timer" size={24} color={primaryColor} />
               </View>
-              <Text style={[styles.statLabel, { color: textVariantColor }]}>Target Pace</Text>
-              <Text style={[styles.statValue, { color: textColor }]}>5:30/km</Text>
+              <Text style={[styles.statLabel, { color: textVariantColor }]}>
+                Target Pace
+              </Text>
+              <Text style={[styles.statValue, { color: textColor }]}>
+                5:30/km
+              </Text>
             </View>
-            <View style={[styles.statBox, { backgroundColor: surfaceColor, borderColor: outlineColor }]}>
-              <View style={[styles.iconWrapper, { backgroundColor: `${primaryColor}1A` }]}>
+            <View
+              style={[
+                styles.statBox,
+                { backgroundColor: surfaceColor, borderColor: outlineColor },
+              ]}
+            >
+              <View
+                style={[
+                  styles.iconWrapper,
+                  { backgroundColor: `${primaryColor}1A` },
+                ]}
+              >
                 <MaterialIcons name="group" size={24} color={primaryColor} />
               </View>
-              <Text style={[styles.statLabel, { color: textVariantColor }]}>Capacity</Text>
-              <Text style={[styles.statValue, { color: textColor }]}>50 / 100</Text>
+              <Text style={[styles.statLabel, { color: textVariantColor }]}>
+                Capacity
+              </Text>
+              <Text style={[styles.statValue, { color: textColor }]}>
+                5 / {selectedEvent?.capacity || 0}
+              </Text>
             </View>
           </View>
 
-          {/* About */}
-          <Text style={[styles.sectionTitle, { color: textColor }]}>About</Text>
-          <TextInput 
-            style={[styles.textArea, { color: textVariantColor, borderColor: outlineColor, backgroundColor: surfaceColor }]}
+          {/* Description */}
+          <Text style={[styles.sectionTitle, { color: textColor }]}>
+            Description
+          </Text>
+          <TextInput
+            style={[
+              styles.textArea,
+              {
+                color: textVariantColor,
+                borderColor: outlineColor,
+                backgroundColor: surfaceColor,
+              },
+            ]}
             multiline
             numberOfLines={4}
             textAlignVertical="top"
-            defaultValue="Join us for an invigorating morning run starting at Crissy Field, tracing the coastline with spectacular views of the Golden Gate Bridge as the sun rises. Suitable for intermediate runners aiming for a steady pace. Water stations provided at the halfway mark."
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Event description..."
           />
 
           {/* FAQs */}
-          <Text style={[styles.sectionTitle, { color: textColor, marginTop: 24 }]}>FAQs</Text>
-          <View style={[styles.faqContainer, { backgroundColor: surfaceColor, borderColor: outlineColor }]}>
-            <View style={[styles.faqItem, { borderBottomColor: outlineColor }]}>
-              <TextInput 
-                style={[styles.faqQuestion, { color: textColor, borderColor: outlineColor, backgroundColor: bgColor }]}
-                defaultValue="Is there bag drop available?"
-              />
-              <TextInput 
-                style={[styles.faqAnswer, { color: textVariantColor, borderColor: outlineColor, backgroundColor: bgColor }]}
-                multiline
-                defaultValue="Yes, a secure bag drop will be available near the starting line from 5:30 AM."
-              />
-            </View>
-            <View style={[styles.faqItem, { borderBottomWidth: 0 }]}>
-              <TextInput 
-                style={[styles.faqQuestion, { color: textColor, borderColor: outlineColor, backgroundColor: bgColor }]}
-                defaultValue="What is the cancellation policy?"
-              />
-              <TextInput 
-                style={[styles.faqAnswer, { color: textVariantColor, borderColor: outlineColor, backgroundColor: bgColor }]}
-                multiline
-                defaultValue="Full refunds are available up to 48 hours before the event start time. No refunds thereafter."
-              />
-            </View>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginTop: 24,
+              marginBottom: 12,
+            }}
+          >
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: textColor, marginBottom: 0 },
+              ]}
+            >
+              FAQs
+            </Text>
+            {faqs.length > 0 && (
+              <Pressable onPress={handleAddFaq} style={{ padding: 4 }}>
+                <Text style={{ color: primaryColor, fontWeight: "bold" }}>
+                  + Add FAQ
+                </Text>
+              </Pressable>
+            )}
           </View>
 
+          {faqs.length > 0 ? (
+            <View
+              style={[
+                styles.faqContainer,
+                { backgroundColor: surfaceColor, borderColor: outlineColor },
+              ]}
+            >
+              {faqs.map((faq, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.faqItem,
+                    { borderBottomColor: outlineColor },
+                    index === faqs.length - 1 && { borderBottomWidth: 0 },
+                  ]}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: textVariantColor,
+                        fontSize: 12,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      FAQ {index + 1}
+                    </Text>
+                    <Pressable
+                      onPress={() => handleRemoveFaq(index)}
+                      style={{ padding: 4 }}
+                    >
+                      <MaterialIcons name="close" size={16} color="#ef4444" />
+                    </Pressable>
+                  </View>
+                  <TextInput
+                    style={[
+                      styles.faqQuestion,
+                      {
+                        color: textColor,
+                        borderColor: outlineColor,
+                        backgroundColor: bgColor,
+                      },
+                    ]}
+                    value={faq.question}
+                    onChangeText={(val) =>
+                      handleUpdateFaq(index, "question", val)
+                    }
+                    placeholder="Question"
+                  />
+                  <TextInput
+                    style={[
+                      styles.faqAnswer,
+                      {
+                        color: textVariantColor,
+                        borderColor: outlineColor,
+                        backgroundColor: bgColor,
+                      },
+                    ]}
+                    multiline
+                    value={faq.answer}
+                    onChangeText={(val) =>
+                      handleUpdateFaq(index, "answer", val)
+                    }
+                    placeholder="Answer"
+                  />
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Pressable
+              style={{
+                borderWidth: 1,
+                borderStyle: "dashed",
+                borderColor: outlineColor,
+                borderRadius: 12,
+                padding: 24,
+                alignItems: "center",
+              }}
+              onPress={handleAddFaq}
+            >
+              <MaterialIcons
+                name="add-circle-outline"
+                size={32}
+                color={primaryColor}
+                style={{ marginBottom: 8 }}
+              />
+              <Text style={{ color: primaryColor, fontWeight: "bold" }}>
+                Add your first FAQ
+              </Text>
+            </Pressable>
+          )}
         </View>
       </ScrollView>
 
       {/* Sticky Bottom Actions */}
-      <View style={[styles.bottomBar, { backgroundColor: surfaceColor, borderTopColor: outlineColor }]}>
-        <Pressable 
+      <View
+        style={[
+          styles.bottomBar,
+          { backgroundColor: surfaceColor, borderTopColor: outlineColor },
+        ]}
+      >
+        <Pressable
           style={[styles.saveBtn, { backgroundColor: primaryColor }]}
-          onPress={() => router.push(`/studio?id=${selectedEvent.id}&step=5`)}
+          onPress={handlePublishChanges}
         >
           <Text style={styles.saveBtnText}>Publish Changes</Text>
         </Pressable>
@@ -319,5 +593,5 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
-  }
+  },
 });
