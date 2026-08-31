@@ -17,9 +17,12 @@ import { useRouter } from "expo-router";
 import { useEventContext } from "@/context/event-context";
 import { FAQ } from "@/models/event";
 import EmptyEventState from "@/components/ui/EmptyEventState";
+import { useAuth } from "@/auth/AuthContext";
+import { getMapById, resolveDisplayLocation } from "@/api/map/mapService";
 
 export default function EditEvent() {
   const router = useRouter();
+  const { authService } = useAuth();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
   const { selectedEvent, events, updateEventDetails } = useEventContext();
@@ -36,6 +39,9 @@ export default function EditEvent() {
       ? new Date(selectedEvent.startDateTime).toLocaleDateString()
       : "",
   );
+  const [location, setLocation] = useState("");
+  const [distance, setDistance] = useState<string>("0.0");
+  const [elevation, setElevation] = useState<string>("0");
 
   useEffect(() => {
     setEventName(selectedEvent?.eventName || "");
@@ -46,7 +52,35 @@ export default function EditEvent() {
         : "",
     );
     setFaqs(selectedEvent?.frequentlyAskedQuestions || []);
+    setLocation("");
+    setDistance("0.0");
+    setElevation("0");
   }, [selectedEvent]);
+
+  useEffect(() => {
+    const fetchMapMetadata = async () => {
+      if (selectedEvent?.mapGuid && !location) {
+        const token = await authService.getAccessToken();
+        if (token) {
+          try {
+            const mapData = await getMapById(token, selectedEvent.mapGuid);
+            const resolvedLocation = await resolveDisplayLocation(mapData.location);
+            setLocation(resolvedLocation);
+            
+            if (mapData.distance != null) {
+              setDistance((mapData.distance / 1000).toFixed(1));
+            }
+            if (mapData.elevation != null) {
+              setElevation(Math.round(mapData.elevation).toString());
+            }
+          } catch (err) {
+            console.error("Failed to fetch map metadata in edit", err);
+          }
+        }
+      }
+    };
+    fetchMapMetadata();
+  }, [selectedEvent?.mapGuid]);
 
   const handleUpdateFaq = (
     index: number,
@@ -173,7 +207,10 @@ export default function EditEvent() {
                     backgroundColor: bgColor,
                   },
                 ]}
-                defaultValue="Crissy Field, San Francisco"
+                value={location}
+                onChangeText={setLocation}
+                placeholder="Location"
+                placeholderTextColor={textVariantColor}
               />
             </View>
           </View>
@@ -205,7 +242,7 @@ export default function EditEvent() {
                 Distance
               </Text>
               <Text style={[styles.statValue, { color: textColor }]}>
-                10.0 km
+                {`${distance} km`}
               </Text>
             </View>
             <View
@@ -229,7 +266,9 @@ export default function EditEvent() {
               <Text style={[styles.statLabel, { color: textVariantColor }]}>
                 Elevation
               </Text>
-              <Text style={[styles.statValue, { color: textColor }]}>45 m</Text>
+              <Text style={[styles.statValue, { color: textColor }]}>
+                {`${elevation} m`}
+              </Text>
             </View>
             <View
               style={[

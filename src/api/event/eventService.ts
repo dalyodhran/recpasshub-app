@@ -34,6 +34,7 @@ export async function loadEventById(
     method: AXIOS_METHOD.GET,
     token,
   });
+  return mapBackendEvent(event);
 }
 
 export async function createEvent(

@@ -12,13 +12,17 @@ import {
 } from "react-native";
 import { useGlobalSearchParams, useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import { useEventContext } from "@/context/event-context";
 import { EventModel } from "@/models/event";
+import { useAuth } from "@/auth/AuthContext";
+import { uploadMapFile, getCityFromCoordinates, getMapById, resolveDisplayLocation } from "@/api/map/mapService";
 
 export default function EventStudio() {
   const router = useRouter();
   const { id, step: queryStep } = useGlobalSearchParams();
   const { events, saveDraft, publishEvent } = useEventContext();
+  const { authService } = useAuth();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
 
@@ -51,6 +55,7 @@ export default function EventStudio() {
     startTime?: string;
     endTime?: string;
     requireWaiver?: boolean;
+    routeFile?: DocumentPicker.DocumentPickerAsset | null;
   }
 
   const [formData, setFormData] = useState<StudioFormData>({
@@ -65,6 +70,7 @@ export default function EventStudio() {
     isMultiDay: false,
     startTime: "",
     endTime: "",
+    routeFile: null,
   });
 
   useEffect(() => {
@@ -99,11 +105,35 @@ export default function EventStudio() {
           isMultiDay: false,
           startTime: initStart,
           endTime: initEnd,
+          mapGuid: draft?.mapGuid,
         });
         setLoadedEventId(eventIdParam as string);
       }
     }
   }, [eventIdParam, events, loadedEventId]);
+
+  useEffect(() => {
+    const fetchMapMetadata = async () => {
+      if (formData.mapGuid && !formData.location) {
+        const token = await authService.getAccessToken();
+        if (token) {
+          try {
+            const mapData = await getMapById(token, formData.mapGuid);
+            const displayLocation = await resolveDisplayLocation(mapData.location);
+
+            setFormData((prev) => ({
+              ...prev,
+              location: displayLocation,
+            }));
+          } catch (err) {
+            console.error("Failed to fetch map metadata", err);
+          }
+        }
+      }
+    };
+
+    fetchMapMetadata();
+  }, [formData.mapGuid]);
 
   const buildPayload = () => {
     let startDateTime = undefined;
@@ -132,6 +162,7 @@ export default function EventStudio() {
       eventType: formData.eventType,
       startDateTime,
       endDateTime,
+      mapGuid: formData.mapGuid,
     };
   };
 
@@ -163,6 +194,57 @@ export default function EventStudio() {
   const handlePublish = () => {
     publishEvent(draftId);
     setStep(5); // Success step
+  };
+
+  const handleRouteUpload = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        if (file.name.toLowerCase().endsWith(".gpx")) {
+          const token = await authService.getAccessToken();
+          if (!token) {
+            alert("Not authenticated.");
+            return;
+          }
+
+          try {
+            const response = await uploadMapFile(
+              token,
+              file.uri,
+              file.name,
+              file.mimeType || "application/octet-stream",
+            );
+
+            const displayLocation = await resolveDisplayLocation(response.location);
+
+            setFormData((prev) => ({
+              ...prev,
+              routeFile: file,
+              mapGuid: response.mapGuid,
+              location: displayLocation,
+            }));
+            console.log(
+              "Map uploaded successfully, mapGuid:",
+              response.mapGuid,
+              "location:",
+              displayLocation
+            );
+          } catch (uploadError) {
+            console.error("Failed to upload map file:", uploadError);
+            alert("Failed to upload the map file.");
+          }
+        } else {
+          alert("Please upload a valid GPX file.");
+        }
+      }
+    } catch (err) {
+      console.error("Error picking document:", err);
+    }
   };
 
   const renderStepIndicator = () => (
@@ -648,15 +730,74 @@ export default function EventStudio() {
                   },
                 ]}
               >
-                <MaterialIcons name="map" size={40} color={textVariantColor} />
-                <Text
-                  style={[
-                    styles.mapPlaceholderText,
-                    { color: textVariantColor },
-                  ]}
-                >
-                  Map preview will appear here
-                </Text>
+                {formData.routeFile ? (
+                  <View style={{ alignItems: "center" }}>
+                    <MaterialIcons name="map" size={40} color={primaryColor} />
+                    <Text
+                      style={[
+                        styles.mapPlaceholderText,
+                        { color: textColor, marginTop: 8 },
+                      ]}
+                    >
+                      {formData.routeFile.name}
+                    </Text>
+                    <Pressable
+                      style={{
+                        marginTop: 12,
+                        paddingVertical: 6,
+                        paddingHorizontal: 12,
+                        backgroundColor: isDark ? "#444" : "#fff",
+                        borderRadius: 4,
+                        borderWidth: 1,
+                        borderColor: outlineColor,
+                      }}
+                      onPress={handleRouteUpload}
+                    >
+                      <Text
+                        style={{
+                          color: primaryColor,
+                          fontSize: 14,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Replace GPX File
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <View style={{ alignItems: "center" }}>
+                    <MaterialIcons
+                      name="upload-file"
+                      size={40}
+                      color={textVariantColor}
+                    />
+                    <Text
+                      style={[
+                        styles.mapPlaceholderText,
+                        {
+                          color: textVariantColor,
+                          marginBottom: 12,
+                          marginTop: 8,
+                        },
+                      ]}
+                    >
+                      Upload GPX route file
+                    </Text>
+                    <Pressable
+                      style={{
+                        paddingVertical: 8,
+                        paddingHorizontal: 16,
+                        backgroundColor: primaryColor,
+                        borderRadius: 6,
+                      }}
+                      onPress={handleRouteUpload}
+                    >
+                      <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                        Choose File
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
               </View>
             </View>
 

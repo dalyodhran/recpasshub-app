@@ -21,4 +21,5 @@ export interface EventModel {
   frequentlyAskedQuestions?: FAQ[];
   createdAt?: string;
   updatedAt?: string;
+  mapGuid?: string;
 }
