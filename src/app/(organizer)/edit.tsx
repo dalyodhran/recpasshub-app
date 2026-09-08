@@ -13,15 +13,18 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-
+import { useIsFocused } from "expo-router/react-navigation";
 import { useEventContext } from "@/context/event-context";
 import { FAQ } from "@/models/event";
 import EmptyEventState from "@/components/ui/EmptyEventState";
 import { useAuth } from "@/auth/AuthContext";
 import { getMapById, resolveDisplayLocation } from "@/api/map/mapService";
 
+import { EventHeroScreen } from "@/components/EventHeroScreen";
+
 export default function EditEvent() {
   const router = useRouter();
+  const isFocused = useIsFocused();
   const { authService } = useAuth();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
@@ -42,6 +45,13 @@ export default function EditEvent() {
   const [location, setLocation] = useState("");
   const [distance, setDistance] = useState<string>("0.0");
   const [elevation, setElevation] = useState<string>("0");
+  const [s3FileLocation, setS3FileLocation] = useState<string>("");
+  const [rawDistanceKm, setRawDistanceKm] = useState<number | undefined>(
+    undefined,
+  );
+  const [rawElevationM, setRawElevationM] = useState<number | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     setEventName(selectedEvent?.eventName || "");
@@ -55,6 +65,9 @@ export default function EditEvent() {
     setLocation("");
     setDistance("0.0");
     setElevation("0");
+    setS3FileLocation("");
+    setRawDistanceKm(undefined);
+    setRawElevationM(undefined);
   }, [selectedEvent]);
 
   useEffect(() => {
@@ -64,14 +77,21 @@ export default function EditEvent() {
         if (token) {
           try {
             const mapData = await getMapById(token, selectedEvent.mapGuid);
-            const resolvedLocation = await resolveDisplayLocation(mapData.location);
+            const resolvedLocation = await resolveDisplayLocation(
+              mapData.location,
+            );
             setLocation(resolvedLocation);
-            
+
             if (mapData.distance != null) {
+              setRawDistanceKm(mapData.distance / 1000);
               setDistance((mapData.distance / 1000).toFixed(1));
             }
             if (mapData.elevation != null) {
+              setRawElevationM(mapData.elevation);
               setElevation(Math.round(mapData.elevation).toString());
+            }
+            if (mapData.s3FileLocation) {
+              setS3FileLocation(mapData.s3FileLocation);
             }
           } catch (err) {
             console.error("Failed to fetch map metadata in edit", err);
@@ -109,9 +129,25 @@ export default function EditEvent() {
         eventName,
         description: description,
         frequentlyAskedQuestions: faqs,
+        state: "PUBLISHED",
       });
     }
     router.push(`/studio?id=${selectedEvent?.eventGuid || ""}&step=5`);
+  };
+
+  const handleMapSave = async (
+    mapGuid: string,
+    newDistance: number,
+    newElevation: number,
+  ) => {
+    setDistance(newDistance.toFixed(1));
+    setElevation(Math.round(newElevation).toString());
+    if (selectedEvent) {
+      await updateEventDetails({
+        ...selectedEvent,
+        mapGuid,
+      });
+    }
   };
 
   const primaryColor = isDark ? "#f59e0b" : "#d97706";
@@ -136,15 +172,17 @@ export default function EditEvent() {
       style={{ flex: 1, backgroundColor: bgColor }}
     >
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Hero Image */}
-        <View style={styles.heroContainer}>
-          <Image
-            source={{
-              uri: "https://images.unsplash.com/photo-1574629810360-7efbb1b379e0?auto=format&fit=crop&q=80&w=2000",
-            }}
-            style={styles.heroImage}
+        {/* Interactive Hero Map Screen (Lazy Loaded) */}
+        {isFocused ? (
+          <EventHeroScreen
+            onMapSave={handleMapSave}
+            s3FileLocation={s3FileLocation}
+            s3DistanceKm={rawDistanceKm}
+            s3ElevationGainM={rawElevationM}
           />
-        </View>
+        ) : (
+          <View style={styles.heroContainer} />
+        )}
 
         <View style={styles.contentContainer}>
           {/* Main Edit Form */}

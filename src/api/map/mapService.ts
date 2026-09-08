@@ -32,15 +32,13 @@ export async function uploadMapFile(
     method: AXIOS_METHOD.POST,
     payload: formData,
     token,
-    config: {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    },
   });
 }
 
-export async function getMapById(token: string, mapGuid: string): Promise<MapsResponse> {
+export async function getMapById(
+  token: string,
+  mapGuid: string,
+): Promise<MapsResponse> {
   return GenericAxiosService<MapsResponse, void>({
     url: ENDPOINT.MAP_BY_ID(mapGuid),
     method: AXIOS_METHOD.GET,
@@ -59,47 +57,54 @@ export interface NominatimResponse {
   };
 }
 
-export async function getCityFromCoordinates(lat: string, lon: string): Promise<string> {
+export async function getCityFromCoordinates(
+  lat: string,
+  lon: string,
+): Promise<string> {
   const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`;
-  
+
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'recpasshub-app/1.0',
-      }
+        "User-Agent": "recpasshub-app/1.0",
+      },
     });
-    
+
     if (!response.ok) {
-      throw new Error('Failed to reverse geocode coordinates');
+      throw new Error("Failed to reverse geocode coordinates");
     }
-    
+
     const data: NominatimResponse = await response.json();
-    
+
     if (data.address) {
-      return data.address.city || 
-             data.address.town || 
-             data.address.village || 
-             data.address.county || 
-             data.display_name || 
-             `${lat},${lon}`;
+      return (
+        data.address.city ||
+        data.address.town ||
+        data.address.village ||
+        data.address.county ||
+        data.display_name ||
+        `${lat},${lon}`
+      );
     }
-    
+
     return data.display_name || `${lat},${lon}`;
   } catch (error) {
-    console.error('Error reverse geocoding:', error);
+    console.error("Error reverse geocoding:", error);
     return `${lat},${lon}`;
   }
 }
 
-export async function resolveDisplayLocation(rawLocation?: string): Promise<string> {
+export async function resolveDisplayLocation(
+  rawLocation?: string,
+): Promise<string> {
   let displayLocation = rawLocation || "";
-  
-  if (displayLocation && displayLocation.includes(',')) {
-    const [lat, lon] = displayLocation.split(',').map((coord) => coord.trim());
+
+  if (displayLocation && displayLocation.includes(",")) {
+    const [lat, lon] = displayLocation.split(",").map((coord) => coord.trim());
     if (lat && lon) {
       displayLocation = await getCityFromCoordinates(lat, lon);
     }
   }
-  
+
   return displayLocation;
 }

@@ -208,7 +208,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
         ...eventData,
         sportType: eventData.sportType || "RUNNING",
         eventType: eventData.eventType || "IN_PERSON",
-        state: "PUBLISHED",
+        state: eventData.state || "DRAFT",
       };
 
       const updatedEvent = await updateEvent(
