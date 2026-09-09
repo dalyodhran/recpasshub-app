@@ -35,16 +35,6 @@ export async function uploadMapFile(
   });
 }
 
-export async function getMapById(
-  token: string,
-  mapGuid: string,
-): Promise<MapsResponse> {
-  return GenericAxiosService<MapsResponse, void>({
-    url: ENDPOINT.MAP_BY_ID(mapGuid),
-    method: AXIOS_METHOD.GET,
-    token,
-  });
-}
 
 export interface NominatimResponse {
   display_name?: string;

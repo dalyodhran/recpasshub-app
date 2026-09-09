@@ -7,6 +7,16 @@ export interface FAQ {
   answer: string;
 }
 
+export interface MapsModel {
+  mapGuid: string;
+  s3FileLocation: string;
+  distance: number;
+  elevation: number;
+  location: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface EventModel {
   eventGuid?: string;
   organizationGuid?: string;
@@ -22,4 +32,5 @@ export interface EventModel {
   createdAt?: string;
   updatedAt?: string;
   mapGuid?: string;
+  map?: MapsModel;
 }

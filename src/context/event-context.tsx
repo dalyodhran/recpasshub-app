@@ -128,6 +128,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
         updatedEvent = await updateEvent(token, eventData.eventGuid!, payload);
       } else {
         delete payload.eventGuid; // Remove draft ID
+        payload.organizationGuid = user.id;
         updatedEvent = await createEvent(token, payload);
       }
 

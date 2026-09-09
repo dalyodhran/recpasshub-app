@@ -16,7 +16,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { useEventContext } from "@/context/event-context";
 import { EventModel } from "@/models/event";
 import { useAuth } from "@/auth/AuthContext";
-import { uploadMapFile, getCityFromCoordinates, getMapById, resolveDisplayLocation } from "@/api/map/mapService";
+import { uploadMapFile, getCityFromCoordinates, resolveDisplayLocation } from "@/api/map/mapService";
 
 export default function EventStudio() {
   const router = useRouter();
@@ -113,27 +113,26 @@ export default function EventStudio() {
   }, [eventIdParam, events, loadedEventId]);
 
   useEffect(() => {
-    const fetchMapMetadata = async () => {
+    const applyMapMetadata = async () => {
       if (formData.mapGuid && !formData.location) {
-        const token = await authService.getAccessToken();
-        if (token) {
-          try {
-            const mapData = await getMapById(token, formData.mapGuid);
-            const displayLocation = await resolveDisplayLocation(mapData.location);
-
+        const existingMap = events.find((e) => e.eventGuid === eventIdParam)?.map;
+        
+        try {
+          if (existingMap?.location) {
+            const displayLocation = await resolveDisplayLocation(existingMap.location);
             setFormData((prev) => ({
               ...prev,
               location: displayLocation,
             }));
-          } catch (err) {
-            console.error("Failed to fetch map metadata", err);
           }
+        } catch (err) {
+          console.error("Failed to apply map metadata", err);
         }
       }
     };
 
-    fetchMapMetadata();
-  }, [formData.mapGuid]);
+    applyMapMetadata();
+  }, [formData.mapGuid, events, eventIdParam]);
 
   const buildPayload = () => {
     let startDateTime = undefined;

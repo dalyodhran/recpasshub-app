@@ -18,7 +18,7 @@ import { useEventContext } from "@/context/event-context";
 import { FAQ } from "@/models/event";
 import EmptyEventState from "@/components/ui/EmptyEventState";
 import { useAuth } from "@/auth/AuthContext";
-import { getMapById, resolveDisplayLocation } from "@/api/map/mapService";
+import { resolveDisplayLocation } from "@/api/map/mapService";
 
 import { EventHeroScreen } from "@/components/EventHeroScreen";
 
@@ -71,36 +71,33 @@ export default function EditEvent() {
   }, [selectedEvent]);
 
   useEffect(() => {
-    const fetchMapMetadata = async () => {
-      if (selectedEvent?.mapGuid && !location) {
-        const token = await authService.getAccessToken();
-        if (token) {
-          try {
-            const mapData = await getMapById(token, selectedEvent.mapGuid);
-            const resolvedLocation = await resolveDisplayLocation(
-              mapData.location,
-            );
-            setLocation(resolvedLocation);
+    const applyMapMetadata = async () => {
+      const mapData = selectedEvent?.map;
+      if (mapData && !location) {
+        try {
+          const resolvedLocation = await resolveDisplayLocation(
+            mapData.location,
+          );
+          setLocation(resolvedLocation);
 
-            if (mapData.distance != null) {
-              setRawDistanceKm(mapData.distance / 1000);
-              setDistance((mapData.distance / 1000).toFixed(1));
-            }
-            if (mapData.elevation != null) {
-              setRawElevationM(mapData.elevation);
-              setElevation(Math.round(mapData.elevation).toString());
-            }
-            if (mapData.s3FileLocation) {
-              setS3FileLocation(mapData.s3FileLocation);
-            }
-          } catch (err) {
-            console.error("Failed to fetch map metadata in edit", err);
+          if (mapData.distance != null) {
+            setRawDistanceKm(mapData.distance / 1000);
+            setDistance((mapData.distance / 1000).toFixed(1));
           }
+          if (mapData.elevation != null) {
+            setRawElevationM(mapData.elevation);
+            setElevation(Math.round(mapData.elevation).toString());
+          }
+          if (mapData.s3FileLocation) {
+            setS3FileLocation(mapData.s3FileLocation);
+          }
+        } catch (err) {
+          console.error("Failed to apply map metadata in edit", err);
         }
       }
     };
-    fetchMapMetadata();
-  }, [selectedEvent?.mapGuid]);
+    applyMapMetadata();
+  }, [selectedEvent?.map, location]);
 
   const handleUpdateFaq = (
     index: number,
