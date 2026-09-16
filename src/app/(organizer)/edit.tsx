@@ -28,7 +28,7 @@ export default function EditEvent() {
   const { authService } = useAuth();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
-  const { selectedEvent, events, updateEventDetails } = useEventContext();
+  const { selectedEvent, events, updateEventDetails, user } = useEventContext();
 
   const [eventName, setEventName] = useState(selectedEvent?.eventName || "");
   const [description, setDescription] = useState(
@@ -127,6 +127,7 @@ export default function EditEvent() {
         description: description,
         frequentlyAskedQuestions: faqs,
         state: "PUBLISHED",
+        organizationGuid: user?.id,
       });
     }
     router.push(`/studio?id=${selectedEvent?.eventGuid || ""}&step=5`);
@@ -143,6 +144,7 @@ export default function EditEvent() {
       await updateEventDetails({
         ...selectedEvent,
         mapGuid,
+        organizationGuid: user?.id,
       });
     }
   };

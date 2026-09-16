@@ -33,4 +33,8 @@ export interface EventModel {
   updatedAt?: string;
   mapGuid?: string;
   map?: MapsModel;
+  waiverGuid?: string;
+  waiver?: {
+    s3FileLocation?: string;
+  };
 }

@@ -16,12 +16,17 @@ import * as DocumentPicker from "expo-document-picker";
 import { useEventContext } from "@/context/event-context";
 import { EventModel } from "@/models/event";
 import { useAuth } from "@/auth/AuthContext";
-import { uploadMapFile, getCityFromCoordinates, resolveDisplayLocation } from "@/api/map/mapService";
+import {
+  uploadMapFile,
+  getCityFromCoordinates,
+  resolveDisplayLocation,
+} from "@/api/map/mapService";
+import { uploadWaiverFile } from "@/api/waiver/waiverService";
 
 export default function EventStudio() {
   const router = useRouter();
   const { id, step: queryStep } = useGlobalSearchParams();
-  const { events, saveDraft, publishEvent } = useEventContext();
+  const { user, events, saveDraft, publishEvent } = useEventContext();
   const { authService } = useAuth();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
@@ -56,13 +61,17 @@ export default function EventStudio() {
     endTime?: string;
     requireWaiver?: boolean;
     routeFile?: DocumentPicker.DocumentPickerAsset | null;
+    waiverFile?: DocumentPicker.DocumentPickerAsset | null;
+    waiverGuid?: string;
+    mapName?: string;
+    waiverName?: string;
   }
 
   const [formData, setFormData] = useState<StudioFormData>({
     eventGuid: draftId,
+    organizationGuid: "",
     eventName: "",
     dateStr: "",
-    location: "",
     maxAttendees: "",
     description: "",
     sportType: "SWIMMING",
@@ -71,6 +80,9 @@ export default function EventStudio() {
     startTime: "",
     endTime: "",
     routeFile: null,
+    waiverFile: null,
+    mapName: "",
+    waiverName: "",
   });
 
   useEffect(() => {
@@ -92,12 +104,23 @@ export default function EventStudio() {
           initEnd = new Date(draft.endDateTime).toTimeString().substring(0, 5);
         }
 
+        let extractedMapName = "";
+        if (draft?.map?.s3FileLocation) {
+          const parts = draft.map.s3FileLocation.split("/");
+          extractedMapName = parts[parts.length - 1];
+        }
+
+        let extractedWaiverName = "";
+        if (draft?.waiver?.s3FileLocation) {
+          const parts = draft.waiver.s3FileLocation.split("/");
+          extractedWaiverName = parts[parts.length - 1];
+        }
+
         setFormData({
           eventGuid: draft?.eventGuid || (eventIdParam as string),
           eventName:
             draft?.eventName === "Untitled Event" ? "" : draft?.eventName || "",
           dateStr: initDate,
-          location: "",
           maxAttendees: draft?.capacity ? draft.capacity.toString() : "",
           description: draft?.description || "",
           sportType: draft?.sportType || "SWIMMING",
@@ -106,6 +129,10 @@ export default function EventStudio() {
           startTime: initStart,
           endTime: initEnd,
           mapGuid: draft?.mapGuid,
+          waiverGuid: draft?.waiverGuid,
+          mapName: extractedMapName,
+          waiverName: extractedWaiverName,
+          requireWaiver: !!draft?.waiverGuid,
         });
         setLoadedEventId(eventIdParam as string);
       }
@@ -115,11 +142,15 @@ export default function EventStudio() {
   useEffect(() => {
     const applyMapMetadata = async () => {
       if (formData.mapGuid && !formData.location) {
-        const existingMap = events.find((e) => e.eventGuid === eventIdParam)?.map;
-        
+        const existingMap = events.find(
+          (e) => e.eventGuid === eventIdParam,
+        )?.map;
+
         try {
           if (existingMap?.location) {
-            const displayLocation = await resolveDisplayLocation(existingMap.location);
+            const displayLocation = await resolveDisplayLocation(
+              existingMap.location,
+            );
             setFormData((prev) => ({
               ...prev,
               location: displayLocation,
@@ -162,6 +193,8 @@ export default function EventStudio() {
       startDateTime,
       endDateTime,
       mapGuid: formData.mapGuid,
+      waiverGuid: formData.waiverGuid,
+      organizationGuid: user?.id,
     };
   };
 
@@ -219,7 +252,9 @@ export default function EventStudio() {
               file.mimeType || "application/octet-stream",
             );
 
-            const displayLocation = await resolveDisplayLocation(response.location);
+            const displayLocation = await resolveDisplayLocation(
+              response.location,
+            );
 
             setFormData((prev) => ({
               ...prev,
@@ -231,7 +266,7 @@ export default function EventStudio() {
               "Map uploaded successfully, mapGuid:",
               response.mapGuid,
               "location:",
-              displayLocation
+              displayLocation,
             );
           } catch (uploadError) {
             console.error("Failed to upload map file:", uploadError);
@@ -243,6 +278,72 @@ export default function EventStudio() {
       }
     } catch (err) {
       console.error("Error picking document:", err);
+    }
+  };
+
+  const handleWaiverUpload = async () => {
+    if (!formData.requireWaiver) return;
+
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/pdf",
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        if (file.name.toLowerCase().endsWith(".pdf")) {
+          const token = await authService.getAccessToken();
+          if (!token) {
+            alert("Not authenticated.");
+            return;
+          }
+
+          try {
+            const response = await uploadWaiverFile(
+              token,
+              file.uri,
+              file.name,
+              file.mimeType || "application/pdf",
+            );
+
+            const updatedPayload = {
+              ...buildPayload(),
+              waiverGuid: response.waiverGuid,
+            };
+            const savedEvent = await saveDraft(updatedPayload);
+
+            setFormData((prev) => ({
+              ...prev,
+              waiverFile: file,
+              waiverGuid: response.waiverGuid,
+              ...(savedEvent?.eventGuid
+                ? { eventGuid: savedEvent.eventGuid }
+                : {}),
+            }));
+
+            if (
+              savedEvent?.eventGuid &&
+              formData.eventGuid?.toString().startsWith("draft-")
+            ) {
+              setLoadedEventId(savedEvent.eventGuid);
+              router.setParams({ id: savedEvent.eventGuid });
+            }
+
+            console.log(
+              "Waiver uploaded successfully, waiverGuid:",
+              response.waiverGuid,
+            );
+          } catch (uploadError) {
+            console.error("Failed to upload waiver file:", uploadError);
+            alert("Failed to upload the waiver file.");
+          }
+        } else {
+          alert("Please upload a valid PDF file.");
+        }
+      }
+    } catch (err) {
+      console.error("Error picking waiver document:", err);
     }
   };
 
@@ -729,7 +830,7 @@ export default function EventStudio() {
                   },
                 ]}
               >
-                {formData.routeFile ? (
+                {formData.routeFile || formData.mapName ? (
                   <View style={{ alignItems: "center" }}>
                     <MaterialIcons name="map" size={40} color={primaryColor} />
                     <Text
@@ -738,7 +839,7 @@ export default function EventStudio() {
                         { color: textColor, marginTop: 8 },
                       ]}
                     >
-                      {formData.routeFile.name}
+                      {formData.routeFile?.name || formData.mapName}
                     </Text>
                     <Pressable
                       style={{
@@ -1011,7 +1112,7 @@ export default function EventStudio() {
                 </Pressable>
               </View>
 
-              <View
+              <Pressable
                 style={[
                   styles.uploadBox,
                   {
@@ -1020,35 +1121,74 @@ export default function EventStudio() {
                     opacity: formData.requireWaiver ? 1 : 0.4,
                   },
                 ]}
+                onPress={
+                  formData.requireWaiver ? handleWaiverUpload : undefined
+                }
               >
-                <View
-                  style={[
-                    styles.uploadIconCircle,
-                    { backgroundColor: isDark ? "#2a2c31" : "#dce9ff" },
-                  ]}
-                >
-                  <MaterialIcons
-                    name="upload-file"
-                    size={28}
-                    color={primaryColor}
-                  />
-                </View>
-                <Text style={[styles.uploadTitle, { color: textColor }]}>
-                  Click to upload or drag and drop
-                </Text>
-                <Text
-                  style={[styles.uploadSubtitle, { color: textVariantColor }]}
-                >
-                  PDF, DOCX, or TXT (Max. 10MB)
-                </Text>
-                <View style={[styles.uploadBtn, { borderColor: outlineColor }]}>
-                  <Text
-                    style={[styles.uploadBtnText, { color: textVariantColor }]}
-                  >
-                    Select Document
-                  </Text>
-                </View>
-              </View>
+                {formData.waiverFile || formData.waiverName ? (
+                  <View style={{ alignItems: "center" }}>
+                    <MaterialIcons
+                      name="description"
+                      size={40}
+                      color={primaryColor}
+                    />
+                    <Text
+                      style={[
+                        styles.uploadTitle,
+                        { color: textColor, marginTop: 8 },
+                      ]}
+                    >
+                      {formData.waiverFile?.name || formData.waiverName}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.uploadBtnText,
+                        { color: primaryColor, marginTop: 12 },
+                      ]}
+                    >
+                      Replace File
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <View
+                      style={[
+                        styles.uploadIconCircle,
+                        { backgroundColor: isDark ? "#2a2c31" : "#dce9ff" },
+                      ]}
+                    >
+                      <MaterialIcons
+                        name="upload-file"
+                        size={28}
+                        color={primaryColor}
+                      />
+                    </View>
+                    <Text style={[styles.uploadTitle, { color: textColor }]}>
+                      Click to upload
+                    </Text>
+                    <Text
+                      style={[
+                        styles.uploadSubtitle,
+                        { color: textVariantColor },
+                      ]}
+                    >
+                      PDF (Max. 10MB)
+                    </Text>
+                    <View
+                      style={[styles.uploadBtn, { borderColor: outlineColor }]}
+                    >
+                      <Text
+                        style={[
+                          styles.uploadBtnText,
+                          { color: textVariantColor },
+                        ]}
+                      >
+                        Select Document
+                      </Text>
+                    </View>
+                  </>
+                )}
+              </Pressable>
             </View>
           </View>
         )}

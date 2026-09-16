@@ -9,13 +9,10 @@ import {
   Pressable,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useAuth } from "@/auth/AuthContext";
-import { Colors } from "@/constants/theme";
 import { useEventContext } from "@/context/event-context";
 import EmptyEventState from "@/components/ui/EmptyEventState";
 
 export default function OrganizerDashboard() {
-  const { logout } = useAuth();
   const { selectedEvent, events } = useEventContext();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";

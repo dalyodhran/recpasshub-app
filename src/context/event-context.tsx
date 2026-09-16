@@ -5,7 +5,9 @@ import {
   updateEvent,
 } from "@/api/event/eventService";
 import { useAuth } from "@/auth/AuthContext";
+import { AuthUser } from "@/auth/types";
 import { EventModel } from "@/models/event";
+import { User } from "@/models/user";
 import * as SecureStore from "expo-secure-store";
 import React, {
   createContext,
@@ -17,6 +19,7 @@ import React, {
 import { Platform } from "react-native";
 
 interface EventContextType {
+  user: AuthUser | null;
   events: EventModel[];
   selectedEvent: EventModel | null;
   switchEvent: (id: string | number) => Promise<void>;
@@ -230,6 +233,7 @@ export const EventProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <EventContext.Provider
       value={{
+        user,
         events,
         selectedEvent,
         switchEvent,
