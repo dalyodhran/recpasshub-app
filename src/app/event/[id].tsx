@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuth } from "@/auth/AuthContext";
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [expanded, setExpanded] = useState(false);
@@ -46,12 +47,14 @@ export default function EventDetailsScreen() {
   const { id, registered } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { isAuthenticated } = useAuth();
 
   // Real app would fetch this from a user profile or context
   // Here we use our mock global state for true dynamic updates
   const isRegisteredParam = registered === "true";
   const isRegistered =
-    (typeof id === "string" && myPassIds.has(id)) || isRegisteredParam;
+    isAuthenticated &&
+    ((typeof id === "string" && myPassIds.has(id)) || isRegisteredParam);
 
   const event = MOCK_EVENTS.find((e) => e.id === id);
 
@@ -233,7 +236,13 @@ export default function EventDetailsScreen() {
           style={styles.joinButton}
           activeOpacity={0.8}
           onPress={() => {
-            if (isRegistered) {
+            if (!isAuthenticated) {
+              // Browsing is open to guests; joining needs an account
+              router.push({
+                pathname: "/login",
+                params: { returnTo: `/event/${id}` },
+              });
+            } else if (isRegistered) {
               router.push(`/event/message/${id}`);
             } else {
               router.push(`/event/checkout/${id}`);

@@ -4,6 +4,7 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Colors } from "@/constants/BoldBlueTheme";
 import { styles } from "@/styles/TopAppBar.styles";
 import { useRouter } from "expo-router";
+import { useAuth } from "@/auth/AuthContext";
 
 interface TopAppBarProps {
   title: string;
@@ -19,6 +20,7 @@ export default function TopAppBar({
   hideNotificationIcon,
 }: TopAppBarProps) {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   return (
     <View style={styles.header}>
@@ -43,7 +45,14 @@ export default function TopAppBar({
         <TouchableOpacity
           style={styles.iconButton}
           activeOpacity={0.7}
-          onPress={() => router.push("/notifications")}
+          onPress={() =>
+            isAuthenticated
+              ? router.push("/notifications")
+              : router.push({
+                  pathname: "/login",
+                  params: { returnTo: "/notifications" },
+                })
+          }
         >
           <MaterialIcons
             name="notifications"

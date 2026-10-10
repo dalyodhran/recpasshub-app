@@ -161,7 +161,11 @@ export default function ProfileScreen() {
               title="Log Out"
               destructive
               hideDivider
-              onPress={logout}
+              onPress={() => {
+                // Back to guest browsing rather than the login screen
+                router.replace("/(tabs)/explore");
+                logout();
+              }}
             />
           </SectionCard>
         </View>

@@ -1,12 +1,22 @@
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { useColorScheme } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "@/auth/AuthContext";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { user } = useAuth();
-  
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  // Guests can browse Explore; account tabs send them to login instead
+  const requireAccount = (returnTo: "/mypass" | "/profile") => ({
+    tabPress: (e: { preventDefault: () => void }) => {
+      if (isAuthenticated) return;
+      e.preventDefault();
+      router.push({ pathname: "/login", params: { returnTo } });
+    },
+  });
+
   const isOrganizer = user?.role === "ORGANIZER";
   const activeTintColor = isOrganizer 
     ? (colorScheme === "dark" ? "#f59e0b" : "#d97706") // Golden Amber for Organizer
@@ -35,6 +45,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="mypass"
+        listeners={requireAccount("/mypass")}
         options={{
           title: "My Pass",
           tabBarIcon: ({ color }) => (
@@ -44,6 +55,7 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="profile"
+        listeners={requireAccount("/profile")}
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
