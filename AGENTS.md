@@ -8,14 +8,23 @@ This project is on Expo SDK 57 / React Native 0.86 / React 19.2. Do not rely on 
 
 ## Committing and landing work
 
-Approved by the repo owner on 2026-10-10. You do **not** need to ask again per commit.
+Approval for this is **standing**, granted by the repo owner on 2026-10-10 and restated the same day. The owner has approved the policy once, for all of it. You do **not** ask again per commit, and you do **not** wait for a reply before committing.
 
 - **Small, self-contained changes go straight to `main`.** Commit in logical commits as you go and push to `origin/main`. No PR, no waiting for approval.
+- **Do not park finished work.** If a small change is done and verified, land it in the same session. Leaving it sitting uncommitted in the shared tree is the failure mode this policy exists to prevent.
 - **Large or risky changes get a branch and a PR.** Branch when the change touches many files at once, alters a security control, changes an API contract other work depends on, or you are not confident it is right. Say why you branched.
 - **Never commit broken code to `main`.** `npx tsc --noEmit` must be clean for the files you touched before you push. If you cannot verify a change, branch it instead.
 - One-line commit messages saying what changed and why. Name the task identifier (`REC-n`).
 - Report the SHAs you pushed in your task comment. That comment is how the owner knows what landed.
 - Stage by path. Never `git add -A` — there is usually unrelated work in progress in this tree, and it is not yours to commit or revert.
+
+### This checkout is shared
+
+Several agents and the owner work in the same working tree at the same time. So:
+
+- **Only commit the paths you changed.** Another agent's half-finished file in `git status` is not yours to land, revert, or stash.
+- **Pull before you push.** `git pull --rebase origin main`, then push. If the rebase conflicts in a file you did not touch, stop and raise it rather than resolving someone else's work.
+- Coordinate through commits and task comments, not by editing files you do not own.
 
 ## Repo conventions
 
