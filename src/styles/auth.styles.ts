@@ -46,6 +46,12 @@ export const authStyles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
   },
+  closeButton: {
+    position: "absolute",
+    right: Spacing.three,
+    bottom: Spacing.three,
+    padding: Spacing.one,
+  },
   centerContainer: {
     flexGrow: 1,
     justifyContent: "center",
