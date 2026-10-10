@@ -28,9 +28,11 @@ export default function UnifiedAuthScreen() {
   const params = useLocalSearchParams<{ role?: string }>();
   const cameAsOrganizer = params.role === "organizer";
 
-  const [role, setRole] = useState<AuthRole>(
-    cameAsOrganizer ? "organizer" : "attendee",
-  );
+  // Only an explicit tap is stored; otherwise follow the route param, so the
+  // Organizer role (and its Keycloak client) holds even if params arrive late
+  const [pickedRole, setPickedRole] = useState<AuthRole | null>(null);
+  const role: AuthRole =
+    pickedRole ?? (cameAsOrganizer ? "organizer" : "attendee");
   const [email, setEmail] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -131,7 +133,7 @@ export default function UnifiedAuthScreen() {
         <AuthHeader title="Welcome Back" subtitle={subtitleText} />
 
         <AuthCard>
-          <RoleSwitcher role={role} onRoleChange={setRole} />
+          <RoleSwitcher role={role} onRoleChange={setPickedRole} />
 
           <SocialAuthButtons
             onPressGoogle={handleSocialAuth}

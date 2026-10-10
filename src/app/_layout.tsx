@@ -7,7 +7,6 @@ import {
   usePathname,
   useRouter,
   useSegments,
-  type Href,
 } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
@@ -16,7 +15,7 @@ import { useColorScheme } from "react-native";
 import { AnimatedSplashOverlay } from "@/components/ui/animated-icon";
 import { AuthProvider, useAuth } from "@/auth/AuthContext";
 import { KeycloakProvider } from "@/auth/providers/KeycloakProvider";
-import { homeRouteFor, isPublicRoute, isSafeReturnPath } from "@/auth/routes";
+import { isPublicRoute, postLoginRoute } from "@/auth/routes";
 import { EventProvider } from "@/context/event-context";
 
 const keycloakProvider = new KeycloakProvider();
@@ -40,10 +39,12 @@ function RootLayoutNav() {
 
     // Signed in on the login screen: continue to where they were heading, or their home section
     if (isAuthenticated && onLoginScreen) {
-      const destination = isSafeReturnPath(returnTo)
-        ? (returnTo as Href)
-        : homeRouteFor(user);
-      console.log("📍 [Router] Session established. Leaving login screen...");
+      const destination = postLoginRoute(user, returnTo);
+      console.log(
+        user?.role === "ORGANIZER"
+          ? "📍 [Router] Organizer session established. Redirecting to organizer section..."
+          : "📍 [Router] Attendee session established. Redirecting to attendee section...",
+      );
       router.replace(destination);
     }
     // Guests may browse public routes; anything else needs an account
@@ -67,7 +68,7 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="welcome" />
-        <Stack.Screen name="login" options={{ presentation: "modal" }} />
+        <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(organizer)" />
       </Stack>

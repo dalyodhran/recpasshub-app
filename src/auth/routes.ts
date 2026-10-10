@@ -22,6 +22,33 @@ export function homeRouteFor(user: AuthUser | null): Href {
     : "/(tabs)/explore";
 }
 
+// URL paths served by the (organizer) group, plus the organizer-only scanner
+const ORGANIZER_PATHS = [
+  "/dashboard",
+  "/studio",
+  "/edit",
+  "/checkin",
+  "/messages",
+  "/scanner",
+];
+
+function isOrganizerPath(path: string): boolean {
+  return ORGANIZER_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
+}
+
+/**
+ * Where to go once a session exists. `returnTo` is honoured only when it
+ * belongs to the signed-in user's side of the app, so an organizer who
+ * started on an attendee screen still lands on the organizer dashboard.
+ */
+export function postLoginRoute(user: AuthUser | null, returnTo: unknown): Href {
+  if (isSafeReturnPath(returnTo)) {
+    const forOrganizer = isOrganizerPath(returnTo);
+    if ((user?.role === "ORGANIZER") === forOrganizer) return returnTo as Href;
+  }
+  return homeRouteFor(user);
+}
+
 /**
  * Routes a signed-out visitor may browse. Everything else requires an account.
  */
