@@ -51,7 +51,13 @@ function RootLayoutNav() {
       console.log(
         "📍 [Router] Unauthenticated access to protected route. Redirecting to login screen...",
       );
-      router.replace({ pathname: "/login", params: { returnTo: pathname } });
+      // Organizer routes open the login with the Organizer role preselected
+      const role =
+        currentSegments[0] === "(organizer)" ? { role: "organizer" } : {};
+      router.replace({
+        pathname: "/login",
+        params: { returnTo: pathname, ...role },
+      });
     }
   }, [isAuthenticated, isLoading, user, segments, pathname, returnTo, router]);
 
@@ -60,6 +66,7 @@ function RootLayoutNav() {
       <AnimatedSplashOverlay />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="welcome" />
         <Stack.Screen name="login" options={{ presentation: "modal" }} />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(organizer)" />

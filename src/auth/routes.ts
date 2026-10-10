@@ -27,7 +27,8 @@ export function homeRouteFor(user: AuthUser | null): Href {
  */
 export function isPublicRoute(segments: string[]): boolean {
   const [first, second] = segments;
-  if (!first || first === "index" || first === "login") return true;
+  if (!first || first === "index" || first === "login" || first === "welcome")
+    return true;
   if (first === "(tabs)") return !second || second === "explore";
   // Event detail only — checkout and messaging live deeper under /event
   if (first === "event") return segments.length === 2 && second === "[id]";

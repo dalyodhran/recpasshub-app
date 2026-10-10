@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pressable, ScrollView, View, useColorScheme } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -25,8 +25,12 @@ export default function UnifiedAuthScreen() {
   const { login, signup, isLoading } = useAuth();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ role?: string }>();
+  const cameAsOrganizer = params.role === "organizer";
 
-  const [role, setRole] = useState<AuthRole>("attendee");
+  const [role, setRole] = useState<AuthRole>(
+    cameAsOrganizer ? "organizer" : "attendee",
+  );
   const [email, setEmail] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -43,7 +47,10 @@ export default function UnifiedAuthScreen() {
 
   // Guests can dismiss login and keep browsing events
   const handleClose = () => {
-    if (router.canGoBack()) {
+    // Organizers who haven't signed in go back to the attend/organize choice
+    if (cameAsOrganizer) {
+      router.replace("/welcome");
+    } else if (router.canGoBack()) {
       router.back();
     } else {
       router.replace("/(tabs)/explore");

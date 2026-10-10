@@ -265,11 +265,7 @@ export default function OrganizerLayout() {
 
                 <Pressable
                   style={[styles.drawerItem, { marginTop: 4 }]}
-                  onPress={() => {
-                    setDrawerVisible(false);
-                    router.replace("/(tabs)/explore");
-                    logout();
-                  }}
+                  onPress={logout}
                 >
                   <MaterialIcons name="logout" size={24} color={errorColor} />
                   <View style={styles.drawerItemTextContainer}>
