@@ -1,4 +1,3 @@
-import type { EventData } from "@/data/mockEvents";
 import EventCard from "@/components/ui/EventCard";
 import EmptyEventState from "@/components/ui/EmptyEventState";
 import FilterChip from "@/components/ui/FilterChip";
@@ -9,7 +8,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/auth/AuthContext";
 import { loadNearbyEvents } from "@/api/event/eventService";
-import { EventModel, SportType } from "@/models/event";
+import { EventModel } from "@/models/event";
+import { toEventData } from "@/models/eventDisplay";
 import * as Location from "expo-location";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import {
@@ -29,59 +29,6 @@ const DEFAULT_RADIUS_KM = 40;
 
 type LocationPhase = "checking" | "undetermined" | "denied" | "granted";
 type FetchStatus = "idle" | "loading" | "success" | "error";
-
-const SPORT_LABELS: Record<string, EventData["sport"]> = {
-  CYCLING: "Cycling",
-  RUNNING: "Running",
-  SWIMMING: "Swimming",
-};
-
-function formatSport(sportType?: SportType): EventData["sport"] {
-  if (!sportType) return "Running";
-  return SPORT_LABELS[sportType] ?? (sportType as EventData["sport"]);
-}
-
-function formatDate(isoDateTime?: string): string {
-  if (!isoDateTime) return "TBD";
-  return new Date(isoDateTime).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(isoDateTime?: string): string {
-  if (!isoDateTime) return "TBD";
-  return new Date(isoDateTime).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-function formatDistance(distanceKm?: number): string {
-  if (distanceKm == null) return "--";
-  return `${distanceKm.toFixed(1)} km`;
-}
-
-// EventCard still expects the mock EventData shape; EventResponse has no organizer
-// display name or image yet, so those render as placeholders until the backend adds them.
-function toEventData(event: EventModel): EventData {
-  return {
-    id: event.eventGuid ?? "",
-    title: event.eventName,
-    organizer: "Rec Pass Hub Organizer",
-    sport: formatSport(event.sportType),
-    date: formatDate(event.startDateTime),
-    time: formatTime(event.startDateTime),
-    distance: formatDistance(event.map?.distance),
-    imageUrl: "",
-    location: event.map?.location ?? "",
-    elevation: event.map?.elevation ? `${event.map.elevation} m` : "",
-    targetPace: "",
-    capacity: event.capacity ? `0 / ${event.capacity}` : "",
-    description: event.description ?? "",
-    faqs: event.frequentlyAskedQuestions ?? [],
-  };
-}
 
 export default function ExploreScreen() {
   const [activeFilter, setActiveFilter] = useState("All Events");

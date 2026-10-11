@@ -1,11 +1,16 @@
+import { loadEventById } from "@/api/event/eventService";
 import TopAppBar from "@/components/ui/TopAppBar";
 import { Colors } from "@/constants/BoldBlueTheme";
-import { MOCK_EVENTS, myPassIds } from "@/data/mockEvents";
+import { myPassIds } from "@/data/mockEvents";
+import type { EventData } from "@/data/mockEvents";
+import { toEventData } from "@/models/eventDisplay";
 import { styles } from "@/styles/event-details.styles";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { isAxiosError } from "axios";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   SafeAreaView,
   ScrollView,
@@ -43,11 +48,18 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   );
 }
 
+type FetchStatus = "loading" | "success" | "not_found" | "error";
+
 export default function EventDetailsScreen() {
   const { id, registered } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, authService } = useAuth();
+
+  const eventId = typeof id === "string" ? id : undefined;
+
+  const [event, setEvent] = useState<EventData | null>(null);
+  const [fetchStatus, setFetchStatus] = useState<FetchStatus>("loading");
 
   // Real app would fetch this from a user profile or context
   // Here we use our mock global state for true dynamic updates
@@ -56,9 +68,69 @@ export default function EventDetailsScreen() {
     isAuthenticated &&
     ((typeof id === "string" && myPassIds.has(id)) || isRegisteredParam);
 
-  const event = MOCK_EVENTS.find((e) => e.id === id);
+  const fetchEvent = useCallback(async () => {
+    if (!eventId) {
+      setFetchStatus("not_found");
+      return;
+    }
+    setFetchStatus("loading");
+    try {
+      const token = await authService.getAccessToken();
+      if (!token) {
+        setFetchStatus("error");
+        return;
+      }
+      const eventModel = await loadEventById(token, eventId);
+      setEvent(toEventData(eventModel));
+      setFetchStatus("success");
+    } catch (err) {
+      if (isAxiosError(err) && err.response?.status === 404) {
+        setFetchStatus("not_found");
+      } else {
+        console.error("Failed to load event:", err);
+        setFetchStatus("error");
+      }
+    }
+  }, [eventId, authService]);
 
-  if (!event) {
+  useEffect(() => {
+    fetchEvent();
+  }, [fetchEvent]);
+
+  if (fetchStatus === "loading") {
+    return (
+      <SafeAreaView
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </SafeAreaView>
+    );
+  }
+
+  if (fetchStatus === "error") {
+    return (
+      <SafeAreaView
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center", paddingHorizontal: 32 },
+        ]}
+      >
+        <Text style={styles.title}>Something Went Wrong</Text>
+        <Text style={[styles.metaText, { textAlign: "center" }]}>
+          We were unable to load this event. Check your connection and try
+          again.
+        </Text>
+        <TouchableOpacity onPress={fetchEvent}>
+          <Text style={{ color: Colors.primary, marginTop: 16 }}>Retry</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  if (fetchStatus === "not_found" || !event) {
     return (
       <SafeAreaView
         style={[
