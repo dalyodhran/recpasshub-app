@@ -25,6 +25,21 @@ export async function loadOrganizerEvents(
   return (events || []).map(mapBackendEvent);
 }
 
+export async function loadNearbyEvents(
+  token: string,
+  latitude: number,
+  longitude: number,
+  radiusKm: number,
+): Promise<EventModel[]> {
+  const events = await GenericAxiosService<EventModel[], void>({
+    url: ENDPOINT.EVENTS_NEARBY,
+    method: AXIOS_METHOD.GET,
+    params: { latitude, longitude, radius: radiusKm },
+    token,
+  });
+  return (events || []).map(mapBackendEvent);
+}
+
 export async function loadEventById(
   token: string,
   eventId: string | number,

@@ -37,4 +37,6 @@ export interface EventModel {
   waiver?: {
     s3FileLocation?: string;
   };
+  latitude?: number;
+  longitude?: number;
 }
