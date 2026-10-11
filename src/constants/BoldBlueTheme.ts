@@ -20,4 +20,6 @@ export const Colors = {
   onSecondaryContainer: "#54647a",
   tertiaryContainer: "#b75b00",
   onTertiaryContainer: "#fffbff",
+  error: "#ba1a1a",
+  onError: "#ffffff",
 };

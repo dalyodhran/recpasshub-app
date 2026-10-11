@@ -13,6 +13,17 @@ import { useEventContext } from "@/context/event-context";
 export default function EmptyEventState({
   title = "No Events Yet",
   message = "Get started by creating your first sporting event to manage RSVPs, check-ins, and messages.",
+  actionLabel = "Create Your First Event",
+  actionIcon = "add",
+  onAction,
+  icon = "event-busy",
+}: {
+  title?: string;
+  message?: string;
+  actionLabel?: string;
+  actionIcon?: keyof typeof MaterialIcons.glyphMap;
+  onAction?: () => void;
+  icon?: keyof typeof MaterialIcons.glyphMap;
 }) {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
@@ -36,6 +47,8 @@ export default function EmptyEventState({
     router.push(`/studio?id=${navId}`);
   };
 
+  const handleAction = onAction ?? handleCreateEvent;
+
   return (
     <View style={[styles.container, { backgroundColor: bgColor }]}>
       <View style={styles.content}>
@@ -45,7 +58,7 @@ export default function EmptyEventState({
             { backgroundColor: isDark ? "#332200" : "#ffedd5" },
           ]}
         >
-          <MaterialIcons name="event-busy" size={48} color={primaryColor} />
+          <MaterialIcons name={icon} size={48} color={primaryColor} />
         </View>
         <Text style={[styles.title, { color: textColor }]}>{title}</Text>
         <Text style={[styles.subtitle, { color: textVariantColor }]}>
@@ -54,15 +67,15 @@ export default function EmptyEventState({
 
         <Pressable
           style={[styles.button, { backgroundColor: primaryColor }]}
-          onPress={handleCreateEvent}
+          onPress={handleAction}
         >
           <MaterialIcons
-            name="add"
+            name={actionIcon}
             size={20}
             color="#ffffff"
             style={{ marginRight: 8 }}
           />
-          <Text style={styles.buttonText}>Create Your First Event</Text>
+          <Text style={styles.buttonText}>{actionLabel}</Text>
         </Pressable>
       </View>
     </View>
