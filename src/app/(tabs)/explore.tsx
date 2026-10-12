@@ -44,6 +44,7 @@ export default function ExploreScreen() {
 
   const [events, setEvents] = useState<EventModel[]>([]);
   const [fetchStatus, setFetchStatus] = useState<FetchStatus>("idle");
+  const [refreshing, setRefreshing] = useState(false);
 
   const checkPermission = useCallback(async () => {
     const { status } = await Location.getForegroundPermissionsAsync();
@@ -94,9 +95,9 @@ export default function ExploreScreen() {
     }
   }, []);
 
-  const fetchEvents = useCallback(async () => {
+  const fetchEvents = useCallback(async (silent = false) => {
     if (!coords) return;
-    setFetchStatus("loading");
+    if (!silent) setFetchStatus("loading");
     try {
       const token = await authService.getAccessToken();
       if (!token) {
@@ -122,6 +123,12 @@ export default function ExploreScreen() {
       fetchEvents();
     }
   }, [locationPhase, coords, fetchEvents]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchEvents(true);
+    setRefreshing(false);
+  }, [fetchEvents]);
 
   const filteredEvents = events
     .map(toEventData)
@@ -229,7 +236,7 @@ export default function ExploreScreen() {
               We were unable to load nearby events. Check your connection and
               try again.
             </Text>
-            <Pressable style={styles.stateButton} onPress={fetchEvents}>
+            <Pressable style={styles.stateButton} onPress={() => fetchEvents()}>
               <Text style={styles.stateButtonText}>Retry</Text>
             </Pressable>
           </View>
@@ -244,7 +251,7 @@ export default function ExploreScreen() {
               message={`We couldn't find any events within ${DEFAULT_RADIUS_KM}km of you right now. Try again later or check back soon.`}
               actionLabel="Retry Search"
               actionIcon="refresh"
-              onAction={fetchEvents}
+              onAction={() => fetchEvents()}
             />
           )}
 
@@ -262,6 +269,8 @@ export default function ExploreScreen() {
               )}
               contentContainerStyle={styles.listContainer}
               showsVerticalScrollIndicator={false}
+              refreshing={refreshing}
+              onRefresh={onRefresh}
             />
           )}
       </View>
