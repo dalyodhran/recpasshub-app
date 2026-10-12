@@ -6,7 +6,6 @@ import { Colors } from "@/constants/BoldBlueTheme";
 import { styles } from "@/styles/explore.styles";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import { useAuth } from "@/auth/AuthContext";
 import { loadNearbyEvents } from "@/api/event/eventService";
 import { EventModel } from "@/models/event";
 import { toEventData } from "@/models/eventDisplay";
@@ -34,7 +33,6 @@ export default function ExploreScreen() {
   const [activeFilter, setActiveFilter] = useState("All Events");
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { authService } = useAuth();
 
   const [locationPhase, setLocationPhase] = useState<LocationPhase>("checking");
   const [coords, setCoords] = useState<{
@@ -99,13 +97,7 @@ export default function ExploreScreen() {
     if (!coords) return;
     if (!silent) setFetchStatus("loading");
     try {
-      const token = await authService.getAccessToken();
-      if (!token) {
-        setFetchStatus("error");
-        return;
-      }
       const nearbyEvents = await loadNearbyEvents(
-        token,
         coords.latitude,
         coords.longitude,
         DEFAULT_RADIUS_KM,
@@ -116,7 +108,7 @@ export default function ExploreScreen() {
       console.error("Failed to load nearby events:", err);
       setFetchStatus("error");
     }
-  }, [coords, authService]);
+  }, [coords]);
 
   useEffect(() => {
     if (locationPhase === "granted" && coords) {

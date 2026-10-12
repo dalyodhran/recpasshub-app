@@ -26,7 +26,6 @@ export async function loadOrganizerEvents(
 }
 
 export async function loadNearbyEvents(
-  token: string,
   latitude: number,
   longitude: number,
   radiusKm: number,
@@ -35,7 +34,6 @@ export async function loadNearbyEvents(
     url: ENDPOINT.EVENTS_NEARBY,
     method: AXIOS_METHOD.GET,
     params: { latitude, longitude, radius: radiusKm },
-    token,
   });
   return (events || []).map(mapBackendEvent);
 }
