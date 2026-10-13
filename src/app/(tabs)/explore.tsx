@@ -35,7 +35,7 @@ type FetchStatus = "idle" | "loading" | "success" | "error";
 async function readPosition() {
   try {
     return await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
+      accuracy: Location.Accuracy.Low,
     });
   } catch (err) {
     const lastKnown = await Location.getLastKnownPositionAsync();
