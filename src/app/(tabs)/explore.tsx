@@ -29,6 +29,21 @@ const DEFAULT_RADIUS_KM = 40;
 type LocationPhase = "checking" | "undetermined" | "denied" | "granted";
 type FetchStatus = "idle" | "loading" | "success" | "error";
 
+// getCurrentPositionAsync throws "Cannot obtain current location" when the
+// device has no fix (e.g. a simulator with no location set), so fall back to
+// the last known position before giving up.
+async function readPosition() {
+  try {
+    return await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+    });
+  } catch (err) {
+    const lastKnown = await Location.getLastKnownPositionAsync();
+    if (lastKnown) return lastKnown;
+    throw err;
+  }
+}
+
 export default function ExploreScreen() {
   const [activeFilter, setActiveFilter] = useState("All Events");
   const insets = useSafeAreaInsets();
@@ -48,9 +63,7 @@ export default function ExploreScreen() {
     const { status } = await Location.getForegroundPermissionsAsync();
     if (status === Location.PermissionStatus.GRANTED) {
       try {
-        const position = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
+        const position = await readPosition();
         setCoords({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -76,9 +89,7 @@ export default function ExploreScreen() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === Location.PermissionStatus.GRANTED) {
-        const position = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
+        const position = await readPosition();
         setCoords({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
