@@ -20,6 +20,11 @@ export const Colors = {
   onSecondaryContainer: "#54647a",
   tertiaryContainer: "#b75b00",
   onTertiaryContainer: "#fffbff",
+  primaryOverlay: "rgba(255,255,255,0.15)",
+  runningBadge: "#fdeccc",
+  onRunningBadge: "#8a3b00",
+  cyclingBadge: "#e0f2fe",
+  onCyclingBadge: "#0b4f7a",
   error: "#ba1a1a",
   onError: "#ffffff",
 };

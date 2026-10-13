@@ -1,4 +1,4 @@
-import EventCard from "@/components/ui/EventCard";
+import ExploreEventCard from "@/components/ui/ExploreEventCard";
 import EmptyEventState from "@/components/ui/EmptyEventState";
 import FilterChip from "@/components/ui/FilterChip";
 import TopAppBar from "@/components/ui/TopAppBar";
@@ -19,11 +19,13 @@ import {
   ScrollView,
   StatusBar,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const FILTERS = ["All Events", "Cycling", "Running", "Swimming"];
+const ALL_EVENTS = "All events";
+const FILTERS = [ALL_EVENTS, "Running", "Cycling", "Swimming"];
 const DEFAULT_RADIUS_KM = 40;
 
 type LocationPhase = "checking" | "undetermined" | "denied" | "granted";
@@ -45,7 +47,8 @@ async function readPosition() {
 }
 
 export default function ExploreScreen() {
-  const [activeFilter, setActiveFilter] = useState("All Events");
+  const [activeFilter, setActiveFilter] = useState(ALL_EVENTS)
+  const [query, setQuery] = useState("");
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -136,15 +139,54 @@ export default function ExploreScreen() {
   const filteredEvents = events
     .map(toEventData)
     .filter(
-      (event) => activeFilter === "All Events" || event.sport === activeFilter,
-    );
+      (event) => activeFilter === ALL_EVENTS || event.sport === activeFilter,
+    )
+    .filter((event) => {
+      const q = query.trim().toLowerCase();
+      return (
+        !q ||
+        event.title.toLowerCase().includes(q) ||
+        event.organizer.toLowerCase().includes(q)
+      );
+    });
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
-      <TopAppBar title="Rec Pass Hub" />
+      <TopAppBar
+        title="Rec Pass Hub"
+        rightSlot={
+          <View style={styles.locationPill}>
+            <MaterialIcons name="place" size={18} color={Colors.onPrimary} />
+            <Text style={styles.locationPillText}>Near you</Text>
+            <MaterialIcons
+              name="expand-more"
+              size={18}
+              color={Colors.onPrimary}
+            />
+          </View>
+        }
+      />
 
       <View style={styles.content}>
+        <View style={styles.searchRow}>
+          <View style={styles.searchBox}>
+            <MaterialIcons name="search" size={22} color={Colors.outline} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search events or clubs"
+              placeholderTextColor={Colors.outline}
+              value={query}
+              onChangeText={setQuery}
+              returnKeyType="search"
+            />
+          </View>
+          {/* Visual only: filter sheet is not built yet. */}
+          <Pressable style={styles.tuneButton}>
+            <MaterialIcons name="tune" size={22} color={Colors.onSurface} />
+          </Pressable>
+        </View>
+
         <View style={styles.filtersWrapper}>
           <ScrollView
             horizontal
@@ -264,8 +306,16 @@ export default function ExploreScreen() {
             <FlatList
               data={filteredEvents}
               keyExtractor={(item) => item.id}
+              ListHeaderComponent={
+                <View style={styles.sectionRow}>
+                  <Text style={styles.sectionTitle}>This week near you</Text>
+                  <Text style={styles.sectionCount}>
+                    {filteredEvents.length} events
+                  </Text>
+                </View>
+              }
               renderItem={({ item }) => (
-                <EventCard
+                <ExploreEventCard
                   event={item}
                   onPress={() => router.push(`/event/${item.id}`)}
                 />

@@ -11,6 +11,7 @@ interface TopAppBarProps {
   showBackButton?: boolean;
   onBackPress?: () => void;
   hideNotificationIcon?: boolean;
+  rightSlot?: React.ReactNode;
 }
 
 export default function TopAppBar({
@@ -18,6 +19,7 @@ export default function TopAppBar({
   showBackButton,
   onBackPress,
   hideNotificationIcon,
+  rightSlot,
 }: TopAppBarProps) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
@@ -39,7 +41,9 @@ export default function TopAppBar({
 
       <Text style={styles.title}>{title}</Text>
 
-      {hideNotificationIcon ? (
+      {rightSlot ? (
+        rightSlot
+      ) : hideNotificationIcon ? (
         <View style={styles.iconButtonPlaceholder} />
       ) : (
         <TouchableOpacity

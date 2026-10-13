@@ -39,7 +39,7 @@ export default function TabLayout() {
         options={{
           title: "Explore",
           tabBarIcon: ({ color }) => (
-            <MaterialIcons name="search" size={24} color={color} />
+            <MaterialIcons name="explore" size={24} color={color} />
           ),
         }}
       />
@@ -47,7 +47,7 @@ export default function TabLayout() {
         name="mypass"
         listeners={requireAccount("/mypass")}
         options={{
-          title: "My Pass",
+          title: "My Passes",
           tabBarIcon: ({ color }) => (
             <MaterialIcons name="confirmation-number" size={24} color={color} />
           ),

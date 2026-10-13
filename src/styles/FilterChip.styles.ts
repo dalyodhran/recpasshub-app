@@ -3,8 +3,8 @@ import { Colors } from '@/constants/BoldBlueTheme';
 
 export const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 9999,
     marginRight: 12,
   },
@@ -12,14 +12,13 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   inactiveContainer: {
-    backgroundColor: Colors.surfaceContainerLow,
+    backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.outlineVariant,
   },
   text: {
-    fontSize: 12,
-    fontWeight: "500",
-    letterSpacing: 0.12,
+    fontSize: 15,
+    fontWeight: "600",
   },
   activeText: {
     color: Colors.onPrimary,
