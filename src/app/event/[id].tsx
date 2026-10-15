@@ -1,4 +1,6 @@
 import { loadEventById } from "@/api/event/eventService";
+import { resolveDisplayLocation } from "@/api/map/mapService";
+import { EventHeroMap } from "@/components/EventHeroMap";
 import TopAppBar from "@/components/ui/TopAppBar";
 import { Colors } from "@/constants/BoldBlueTheme";
 import { myPassIds } from "@/data/mockEvents";
@@ -11,7 +13,6 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   SafeAreaView,
   ScrollView,
   Text,
@@ -76,7 +77,14 @@ export default function EventDetailsScreen() {
     setFetchStatus("loading");
     try {
       const eventModel = await loadEventById(eventId);
-      setEvent(toEventData(eventModel));
+      const eventData = toEventData(eventModel);
+      try {
+        eventData.location = await resolveDisplayLocation(eventData.location);
+      } catch (err) {
+        // Keep the raw "lat, lon" string if reverse geocoding fails.
+        console.error("Failed to resolve event location:", err);
+      }
+      setEvent(eventData);
       setFetchStatus("success");
     } catch (err) {
       if (isAxiosError(err) && err.response?.status === 404) {
@@ -154,8 +162,8 @@ export default function EventDetailsScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Map Snapshot */}
         <View style={styles.heroImageContainer}>
-          <Image source={{ uri: event.imageUrl }} style={styles.heroImage} />
-          <View style={styles.gradientOverlay} />
+          <EventHeroMap s3FileLocation={event.s3FileLocation} />
+          <View style={styles.gradientOverlay} pointerEvents="none" />
         </View>
 
         <View style={styles.contentContainer}>

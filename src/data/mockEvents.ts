@@ -7,6 +7,7 @@ export interface EventData {
   time: string;
   distance: string;
   imageUrl: string;
+  s3FileLocation?: string;
   location: string;
   elevation: string;
   targetPace: string;

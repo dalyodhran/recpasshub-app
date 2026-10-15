@@ -30,7 +30,7 @@ export function formatTime(isoDateTime?: string): string {
 
 export function formatDistance(distanceKm?: number): string {
   if (distanceKm == null) return "--";
-  return `${distanceKm.toFixed(1)} km`;
+  return `${distanceKm.toFixed(2)} km`;
 }
 
 // EventCard/EventDetailsScreen still expect the mock EventData shape; EventResponse has no
@@ -43,10 +43,15 @@ export function toEventData(event: EventModel): EventData {
     sport: formatSport(event.sportType),
     date: formatDate(event.startDateTime),
     time: formatTime(event.startDateTime),
-    distance: formatDistance(event.map?.distance),
+    distance: formatDistance(
+      event.map?.distance != null ? event.map.distance / 1000 : undefined,
+    ),
     imageUrl: "",
+    s3FileLocation: event.map?.s3FileLocation,
     location: event.map?.location ?? "",
-    elevation: event.map?.elevation ? `${event.map.elevation} m` : "",
+    elevation: event.map?.elevation
+      ? `${Math.round(event.map.elevation)} m`
+      : "",
     targetPace: "",
     capacity: event.capacity ? `0 / ${event.capacity}` : "",
     description: event.description ?? "",
