@@ -38,14 +38,13 @@ export async function loadNearbyEvents(
   return (events || []).map(mapBackendEvent);
 }
 
+// No token: event detail is browsable by logged-out users, like /nearby.
 export async function loadEventById(
-  token: string,
   eventId: string | number,
 ): Promise<EventModel> {
   const event = await GenericAxiosService<EventModel, void>({
-    url: ENDPOINT.ORGANIZER_EVENT_BY_ID(eventId),
+    url: ENDPOINT.EVENT_BY_ID(eventId),
     method: AXIOS_METHOD.GET,
-    token,
   });
   return mapBackendEvent(event);
 }

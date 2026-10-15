@@ -54,7 +54,7 @@ export default function EventDetailsScreen() {
   const { id, registered } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isAuthenticated, authService } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const eventId = typeof id === "string" ? id : undefined;
 
@@ -75,12 +75,7 @@ export default function EventDetailsScreen() {
     }
     setFetchStatus("loading");
     try {
-      const token = await authService.getAccessToken();
-      if (!token) {
-        setFetchStatus("error");
-        return;
-      }
-      const eventModel = await loadEventById(token, eventId);
+      const eventModel = await loadEventById(eventId);
       setEvent(toEventData(eventModel));
       setFetchStatus("success");
     } catch (err) {
@@ -91,7 +86,7 @@ export default function EventDetailsScreen() {
         setFetchStatus("error");
       }
     }
-  }, [eventId, authService]);
+  }, [eventId]);
 
   useEffect(() => {
     fetchEvent();
