@@ -15,6 +15,7 @@ interface StudioFooterProps {
   loading?: boolean;
   disabled?: boolean;
   showArrow?: boolean;
+  icon?: keyof typeof MaterialIcons.glyphMap;
   secondaryLabel?: string;
   onSecondary?: () => void;
 }
@@ -25,6 +26,7 @@ export function StudioFooter({
   loading,
   disabled,
   showArrow = true,
+  icon = "arrow-forward",
   secondaryLabel,
   onSecondary,
 }: StudioFooterProps) {
@@ -68,7 +70,7 @@ export function StudioFooter({
             </Text>
             {showArrow && (
               <MaterialIcons
-                name="arrow-forward"
+                name={icon}
                 size={22}
                 color={t.onPrimary}
               />

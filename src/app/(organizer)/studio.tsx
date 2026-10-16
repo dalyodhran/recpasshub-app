@@ -25,7 +25,7 @@ import {
   StepLocation,
   type LocationEventType,
 } from "@/components/studio/StepLocation";
-import { StepPlaceholder } from "@/components/studio/StepPlaceholder";
+import { StepReview } from "@/components/studio/StepReview";
 import {
   StepRegistration,
   type RegistrationValues,
@@ -47,9 +47,6 @@ const SUCCESS_STEP = 5;
 
 const STEP_LABELS = ["Details", "Location", "Registration", "Review"];
 const DEFAULT_CAPACITY = 200;
-const PLACEHOLDERS: Record<number, { title: string; subtitle: string }> = {
-  4: { title: "Review & Publish", subtitle: "Review before publishing." },
-};
 
 const EMPTY_VALUES: DetailsValues = {
   sportType: "SWIMMING",
@@ -357,8 +354,17 @@ export default function EventStudio() {
 
   const handleContinue = async () => {
     if (step === TOTAL_STEPS) {
-      publishEvent(eventGuid);
-      setStep(SUCCESS_STEP);
+      setSaving(true);
+      try {
+        // Persist any edits made via the review pencils before publishing.
+        const saved = await saveDraft(buildPayload());
+        await publishEvent(saved?.eventGuid ?? eventGuid);
+        setStep(SUCCESS_STEP);
+      } catch (err) {
+        console.warn("Failed to publish event", err);
+      } finally {
+        setSaving(false);
+      }
       return;
     }
     await handleSaveDraft();
@@ -381,8 +387,6 @@ export default function EventStudio() {
       />
     );
   }
-
-  const placeholder = PLACEHOLDERS[step];
 
   return (
     <KeyboardAvoidingView
@@ -438,18 +442,27 @@ export default function EventStudio() {
             onWaiverPick={handleWaiverPick}
           />
         ) : (
-          placeholder && <StepPlaceholder {...placeholder} />
+          <StepReview
+            values={values}
+            local={local}
+            route={route}
+            eventType={eventType}
+            venue={venue}
+            registration={registration}
+            hasWaiver={!!(carry.waiverGuid || waiverFile)}
+            onEdit={setStep}
+          />
         )}
       </ScrollView>
       <StudioFooter
         primaryLabel={
           step === TOTAL_STEPS
-            ? "Publish Event"
+            ? "Publish event"
             : step === 3
               ? "Review"
               : "Continue"
         }
-        showArrow={step !== TOTAL_STEPS}
+        icon={step === TOTAL_STEPS ? "rocket-launch" : "arrow-forward"}
         onPrimary={handleContinue}
         loading={saving}
         disabled={
@@ -457,7 +470,9 @@ export default function EventStudio() {
           mapUploading ||
           (step === 3 &&
             (waiverUploading ||
-              (registration.requireWaiver && !carry.waiverGuid && !waiverFile) ||
+              (registration.requireWaiver &&
+                !carry.waiverGuid &&
+                !waiverFile) ||
               (registration.pricing === "PAID" &&
                 !(parseFloat(registration.cost) > 0)))) ||
           (step === 2 && eventType === "IN_PERSON" && !venue)
