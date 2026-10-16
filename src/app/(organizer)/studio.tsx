@@ -27,6 +27,12 @@ import {
 } from "@/components/studio/StepLocation";
 import { StepPlaceholder } from "@/components/studio/StepPlaceholder";
 import {
+  StepRegistration,
+  type RegistrationValues,
+  type WaiverFileInfo,
+} from "@/components/studio/StepRegistration";
+import { uploadWaiverFile } from "@/api/waiver/waiverService";
+import {
   reverseGeocode,
   uploadMapFile,
   type PlaceResult,
@@ -40,8 +46,8 @@ const TOTAL_STEPS = 4;
 const SUCCESS_STEP = 5;
 
 const STEP_LABELS = ["Details", "Location", "Registration", "Review"];
+const DEFAULT_CAPACITY = 200;
 const PLACEHOLDERS: Record<number, { title: string; subtitle: string }> = {
-  3: { title: "Registration", subtitle: "Capacity and waiver requirements." },
   4: { title: "Review & Publish", subtitle: "Review before publishing." },
 };
 
@@ -102,6 +108,16 @@ export default function EventStudio() {
   const [route, setRoute] = useState<RouteData | null>(null);
   const [mapUploading, setMapUploading] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
+  // Price (free/paid + cost) has no model field yet, so it stays local.
+  const [registration, setRegistration] = useState<RegistrationValues>({
+    capacity: DEFAULT_CAPACITY,
+    pricing: "FREE",
+    cost: "",
+    requireWaiver: false,
+  });
+  const [waiverFile, setWaiverFile] = useState<WaiverFileInfo | null>(null);
+  const [waiverUploading, setWaiverUploading] = useState(false);
+  const [waiverError, setWaiverError] = useState<string | null>(null);
 
   // Hydrate from an existing draft/event.
   useEffect(() => {
@@ -126,6 +142,17 @@ export default function EventStudio() {
       waiverGuid: draft?.waiverGuid,
       logoGuid: draft?.logoGuid,
     });
+    setRegistration((r) => ({
+      ...r,
+      capacity: draft?.capacity ?? DEFAULT_CAPACITY,
+      requireWaiver: !!draft?.waiverGuid,
+    }));
+    if (draft?.waiver?.s3FileLocation) {
+      const name = decodeURIComponent(
+        draft.waiver.s3FileLocation.split("?")[0].split("/").pop() ?? "",
+      );
+      setWaiverFile({ name: name || "Waiver.pdf" });
+    }
     setEventType(draft?.eventType === "VIRTUAL" ? "VIRTUAL" : "IN_PERSON");
     if (draft?.latitude != null && draft?.longitude != null) {
       const { latitude, longitude } = draft;
@@ -194,7 +221,7 @@ export default function EventStudio() {
     eventName: values.eventName || "Untitled Event",
     description: values.description,
     tags: local.tags.map((name): TagModel => ({ name })),
-    capacity: carry.capacity,
+    capacity: registration.capacity,
     sportType: values.sportType,
     terrainType: local.venue || undefined,
     eventType,
@@ -203,7 +230,7 @@ export default function EventStudio() {
     startDateTime: combine(values.date, values.start)?.toISOString(),
     endDateTime: combine(values.date, values.end)?.toISOString(),
     mapGuid: carry.mapGuid,
-    waiverGuid: carry.waiverGuid,
+    waiverGuid: registration.requireWaiver ? carry.waiverGuid : undefined,
     logoGuid: carry.logoGuid,
     organizationGuid: user?.id,
   });
@@ -279,6 +306,38 @@ export default function EventStudio() {
       setMapError("Couldn't upload the map. Please try again.");
     } finally {
       setMapUploading(false);
+    }
+  };
+
+  const handleWaiverPick = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "application/pdf",
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const file = result.assets[0];
+
+    setWaiverError(null);
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      setWaiverError("Please choose a PDF file.");
+      return;
+    }
+    setWaiverUploading(true);
+    try {
+      const token = await authService.getAccessToken();
+      if (!token) throw new Error("Not signed in");
+      const res = await uploadWaiverFile(
+        token,
+        file.uri,
+        file.name,
+        file.mimeType ?? "application/pdf",
+      );
+      setCarry((c) => ({ ...c, waiverGuid: res.waiverGuid }));
+      setWaiverFile({ name: file.name, sizeBytes: file.size });
+    } catch {
+      setWaiverError("Couldn't upload the waiver. Please try again.");
+    } finally {
+      setWaiverUploading(false);
     }
   };
 
@@ -369,18 +428,38 @@ export default function EventStudio() {
             mapError={mapError}
             onMapPick={handleMapPick}
           />
+        ) : step === 3 ? (
+          <StepRegistration
+            values={registration}
+            onChange={(patch) => setRegistration((r) => ({ ...r, ...patch }))}
+            waiverFile={waiverFile}
+            waiverUploading={waiverUploading}
+            waiverError={waiverError}
+            onWaiverPick={handleWaiverPick}
+          />
         ) : (
           placeholder && <StepPlaceholder {...placeholder} />
         )}
       </ScrollView>
       <StudioFooter
-        primaryLabel={step === TOTAL_STEPS ? "Publish Event" : "Continue"}
+        primaryLabel={
+          step === TOTAL_STEPS
+            ? "Publish Event"
+            : step === 3
+              ? "Review"
+              : "Continue"
+        }
         showArrow={step !== TOTAL_STEPS}
         onPrimary={handleContinue}
         loading={saving}
         disabled={
           logoUploading ||
           mapUploading ||
+          (step === 3 &&
+            (waiverUploading ||
+              (registration.requireWaiver && !carry.waiverGuid && !waiverFile) ||
+              (registration.pricing === "PAID" &&
+                !(parseFloat(registration.cost) > 0)))) ||
           (step === 2 && eventType === "IN_PERSON" && !venue)
         }
       />
