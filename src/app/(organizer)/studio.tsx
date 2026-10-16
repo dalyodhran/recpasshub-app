@@ -382,7 +382,9 @@ export default function EventStudio() {
   if (step === SUCCESS_STEP) {
     return (
       <StudioSuccess
-        onDashboard={() => router.replace("/")}
+        eventName={values.eventName || "Untitled Event"}
+        // TODO: pass registrationLink once the event link is implemented
+        onDashboard={() => router.replace("/dashboard")}
         onEventList={() => router.replace("/")}
       />
     );
