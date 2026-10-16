@@ -10,6 +10,7 @@ import {
 import MapView, { Polyline } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Colors as BoldBlue } from "@/constants/BoldBlueTheme";
 import { Colors, Spacing } from "@/constants/theme";
 import {
   DEFAULT_REGION,
@@ -27,7 +28,7 @@ interface EventHeroMapProps {
 export function EventHeroMap({ s3FileLocation }: EventHeroMapProps) {
   const isDark = useColorScheme() === "dark";
   const colors = Colors[isDark ? "dark" : "light"];
-  const primaryColor = isDark ? "#f59e0b" : "#d97706";
+  const routeColor = BoldBlue.primary;
   const insets = useSafeAreaInsets();
   const [routeData, setRouteData] = useState<RouteData | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -74,7 +75,7 @@ export function EventHeroMap({ s3FileLocation }: EventHeroMapProps) {
             {routeData && (
               <Polyline
                 coordinates={routeData.coordinates}
-                strokeColor={primaryColor}
+                strokeColor={routeColor}
                 strokeWidth={4}
                 lineCap="round"
                 lineJoin="round"
@@ -100,7 +101,9 @@ export function EventHeroMap({ s3FileLocation }: EventHeroMapProps) {
         presentationStyle="fullScreen"
         onRequestClose={() => setIsFullScreen(false)}
       >
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View
+          style={[styles.container, { backgroundColor: colors.background }]}
+        >
           <MapView
             key={mapKey}
             style={StyleSheet.absoluteFill}
@@ -111,7 +114,7 @@ export function EventHeroMap({ s3FileLocation }: EventHeroMapProps) {
             {routeData && (
               <Polyline
                 coordinates={routeData.coordinates}
-                strokeColor={primaryColor}
+                strokeColor={routeColor}
                 strokeWidth={6}
                 lineCap="round"
                 lineJoin="round"

@@ -41,7 +41,14 @@
         {
           "locationWhenInUsePermission": "Allow Rec Pass Hub to use your location to find events near you."
         }
-      ]
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Rec Pass Hub to access your photos so you can choose a logo for your event."
+        }
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

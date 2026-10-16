@@ -9,4 +9,6 @@ export const ENDPOINT = {
   EVENTS_NEARBY: `api/v1/events/nearby`,
   MAPS_FILE: "api/v1/maps",
   WAIVER_FILE: "api/v1/waivers",
+  LOGOS: "api/v1/logos",
+  LOGO_BY_ID: (logoGuid: string) => `${ENDPOINT.LOGOS}/${logoGuid}`,
 } as const;

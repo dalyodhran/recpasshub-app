@@ -133,20 +133,21 @@ export function parseGpxRoute(
   };
 }
 
+// Turns an s3:// location into a fetchable http URL (LocalStack); other URLs pass through.
+export function resolveS3Url(location: string): string {
+  if (!location.startsWith("s3://")) return location;
+  // Note: If testing on a physical iOS device, replace 'localhost' with your computer's local IP (e.g. 192.168.1.X).
+  const LOCALSTACK_HOST =
+    Platform.OS === "android" ? "10.0.2.2:4566" : "localhost:4566";
+  return location.replace("s3://", `http://${LOCALSTACK_HOST}/`);
+}
+
 // Downloads a GPX file (s3:// is rewritten to LocalStack) and parses it.
 export async function fetchGpxRouteFromS3(
   s3FileLocation: string,
   overrides?: { distanceKm?: number; elevationGainM?: number },
 ): Promise<RouteData | null> {
-  let downloadUrl = s3FileLocation;
-
-  if (s3FileLocation.startsWith("s3://")) {
-    // LocalStack URL translation.
-    // Note: If testing on a physical iOS device, replace 'localhost' with your computer's local IP (e.g. 192.168.1.X).
-    const LOCALSTACK_HOST =
-      Platform.OS === "android" ? "10.0.2.2:4566" : "localhost:4566";
-    downloadUrl = s3FileLocation.replace("s3://", `http://${LOCALSTACK_HOST}/`);
-  }
+  let downloadUrl = resolveS3Url(s3FileLocation);
 
   // Append cache-busting timestamp
   downloadUrl = `${downloadUrl}${downloadUrl.includes("?") ? "&" : "?"}_t=${Date.now()}`;
