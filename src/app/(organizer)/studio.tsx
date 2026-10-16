@@ -4,7 +4,14 @@ import { useGlobalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/auth/AuthContext";
 import { getLogo, uploadLogoFile } from "@/api/logo/logoService";
-import { resolveS3Url } from "@/utils/gpxRoute";
+import * as DocumentPicker from "expo-document-picker";
+import * as FileSystem from "expo-file-system/legacy";
+import {
+  fetchGpxRouteFromS3,
+  parseGpxRoute,
+  resolveS3Url,
+  type RouteData,
+} from "@/utils/gpxRoute";
 import { useEventContext } from "@/context/event-context";
 import { useOrganizerTheme } from "@/constants/organizerTheme";
 import type { SportType, TagModel } from "@/models/event";
@@ -14,7 +21,16 @@ import {
   type DetailsValues,
 } from "@/components/studio/StepDetails";
 import type { PickedImage } from "@/components/studio/ImagePickerTile";
+import {
+  StepLocation,
+  type LocationEventType,
+} from "@/components/studio/StepLocation";
 import { StepPlaceholder } from "@/components/studio/StepPlaceholder";
+import {
+  reverseGeocode,
+  uploadMapFile,
+  type PlaceResult,
+} from "@/api/map/mapService";
 import { StepProgress } from "@/components/studio/StepProgress";
 import { StudioFooter } from "@/components/studio/StudioFooter";
 import { StudioHeader } from "@/components/studio/StudioHeader";
@@ -25,7 +41,6 @@ const SUCCESS_STEP = 5;
 
 const STEP_LABELS = ["Details", "Location", "Registration", "Review"];
 const PLACEHOLDERS: Record<number, { title: string; subtitle: string }> = {
-  2: { title: "Location & Details", subtitle: "Where the event happens." },
   3: { title: "Registration", subtitle: "Capacity and waiver requirements." },
   4: { title: "Review & Publish", subtitle: "Review before publishing." },
 };
@@ -79,8 +94,14 @@ export default function EventStudio() {
     mapGuid?: string;
     waiverGuid?: string;
     logoGuid?: string;
-    eventType?: string;
   }>({});
+  const [eventType, setEventType] = useState<LocationEventType>("IN_PERSON");
+  const [venue, setVenue] = useState<PlaceResult | null>(null);
+  // True while the venue was filled from the GPX start point, so a new map may replace it.
+  const [venueDerived, setVenueDerived] = useState(false);
+  const [route, setRoute] = useState<RouteData | null>(null);
+  const [mapUploading, setMapUploading] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Hydrate from an existing draft/event.
   useEffect(() => {
@@ -104,8 +125,15 @@ export default function EventStudio() {
       mapGuid: draft?.mapGuid,
       waiverGuid: draft?.waiverGuid,
       logoGuid: draft?.logoGuid,
-      eventType: draft?.eventType,
     });
+    setEventType(draft?.eventType === "VIRTUAL" ? "VIRTUAL" : "IN_PERSON");
+    if (draft?.latitude != null && draft?.longitude != null) {
+      const { latitude, longitude } = draft;
+      setVenue({ name: "Selected location", address: "", latitude, longitude });
+      reverseGeocode(latitude, longitude).then((place) => {
+        if (place) setVenue(place);
+      });
+    }
     setLocal((l) => ({
       ...l,
       venue: draft?.terrainType ?? "",
@@ -116,6 +144,28 @@ export default function EventStudio() {
     }));
     setEventGuid(draft?.eventGuid || eventIdParam);
     setLoadedEventId(eventIdParam);
+
+    if (draft?.map?.s3FileLocation) {
+      const { s3FileLocation, distance, elevation } = draft.map;
+      fetchGpxRouteFromS3(s3FileLocation, {
+        distanceKm: distance / 1000,
+        elevationGainM: elevation,
+      })
+        .then(async (loaded) => {
+          setRoute(loaded);
+          // No saved venue yet: derive it from where the route starts.
+          const start = loaded?.coordinates[0];
+          if (start && draft.latitude == null) {
+            const place = await reverseGeocode(start.latitude, start.longitude);
+            if (place) {
+              setVenue(place);
+              setVenueDerived(true);
+            }
+          }
+        })
+        // preview stays on the upload placeholder
+        .catch((err) => console.warn("Failed to load map", err));
+    }
 
     // Logo not embedded on the event: fetch it by guid.
     if (draft?.logoGuid && !draft.logo?.s3FileLocation) {
@@ -147,7 +197,9 @@ export default function EventStudio() {
     capacity: carry.capacity,
     sportType: values.sportType,
     terrainType: local.venue || undefined,
-    eventType: carry.eventType ?? "IN_PERSON",
+    eventType,
+    latitude: eventType === "IN_PERSON" ? venue?.latitude : undefined,
+    longitude: eventType === "IN_PERSON" ? venue?.longitude : undefined,
     startDateTime: combine(values.date, values.start)?.toISOString(),
     endDateTime: combine(values.date, values.end)?.toISOString(),
     mapGuid: carry.mapGuid,
@@ -176,6 +228,57 @@ export default function EventStudio() {
       setLogoError("Couldn't upload the logo. Please try again.");
     } finally {
       setLogoUploading(false);
+    }
+  };
+
+  const handleMapPick = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "*/*",
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets[0]) return;
+    const file = result.assets[0];
+
+    setMapError(null);
+    if (!file.name.toLowerCase().endsWith(".gpx")) {
+      setMapError("Please choose a .gpx file.");
+      return;
+    }
+    setMapUploading(true);
+    try {
+      const token = await authService.getAccessToken();
+      if (!token) throw new Error("Not signed in");
+      const res = await uploadMapFile(
+        token,
+        file.uri,
+        file.name,
+        file.mimeType ?? "application/gpx+xml",
+      );
+      const content = await FileSystem.readAsStringAsync(file.uri);
+      const parsed = parseGpxRoute(content, {
+        distanceKm: res.distance / 1000,
+        elevationGainM: res.elevation,
+      });
+      if (!parsed) throw new Error("No track in GPX");
+      setCarry((c) => ({ ...c, mapGuid: res.mapGuid }));
+      setRoute(parsed);
+
+      // Derive the venue from where the route starts, unless the organizer
+      // picked one by hand.
+      if (!venue || venueDerived) {
+        const start = parsed.coordinates[0];
+        const place = start
+          ? await reverseGeocode(start.latitude, start.longitude)
+          : null;
+        if (place) {
+          setVenue(place);
+          setVenueDerived(true);
+        }
+      }
+    } catch {
+      setMapError("Couldn't upload the map. Please try again.");
+    } finally {
+      setMapUploading(false);
     }
   };
 
@@ -252,6 +355,20 @@ export default function EventStudio() {
             logoUploading={logoUploading}
             logoError={logoError}
           />
+        ) : step === 2 ? (
+          <StepLocation
+            eventType={eventType}
+            venue={venue}
+            onEventTypeChange={setEventType}
+            onVenueChange={(place) => {
+              setVenue(place);
+              setVenueDerived(false);
+            }}
+            route={route}
+            mapUploading={mapUploading}
+            mapError={mapError}
+            onMapPick={handleMapPick}
+          />
         ) : (
           placeholder && <StepPlaceholder {...placeholder} />
         )}
@@ -261,7 +378,11 @@ export default function EventStudio() {
         showArrow={step !== TOTAL_STEPS}
         onPrimary={handleContinue}
         loading={saving}
-        disabled={logoUploading}
+        disabled={
+          logoUploading ||
+          mapUploading ||
+          (step === 2 && eventType === "IN_PERSON" && !venue)
+        }
       />
     </KeyboardAvoidingView>
   );

@@ -1,3 +1,4 @@
+import { MaterialIcons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useOrganizerTheme } from "@/constants/organizerTheme";
 import type { StudioOption } from "@/data/studioMock";
@@ -33,6 +34,13 @@ export function SegmentedControl<T extends string>({
               },
             ]}
           >
+            {o.icon ? (
+              <MaterialIcons
+                name={o.icon as keyof typeof MaterialIcons.glyphMap}
+                size={20}
+                color={selected ? t.primaryDark : t.textMuted}
+              />
+            ) : null}
             <Text
               style={[
                 styles.label,
@@ -54,6 +62,8 @@ const styles = StyleSheet.create({
   segment: {
     flex: 1,
     height: 46,
+    flexDirection: "row",
+    gap: 8,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
