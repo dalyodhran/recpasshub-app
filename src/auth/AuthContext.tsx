@@ -9,6 +9,7 @@ import React, {
 import { AuthUser, IAuthService } from "./types";
 import { loadUser } from "@/api/user/loadUser";
 import { registerUser } from "@/api/user/registerUser";
+import type { User } from "@/models/user";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -21,6 +22,21 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+const isNotFound = (err: unknown): boolean =>
+  (err as { response?: { status?: number } })?.response?.status === 404;
+
+// Loads the backend user; if missing (null body or 404, e.g. DB was wiped),
+// recreates it from the token via registerUser.
+const loadOrCreateBackendUser = async (token: string): Promise<User> => {
+  let backendUser: User | null | undefined;
+  try {
+    backendUser = await loadUser(token);
+  } catch (err) {
+    if (!isNotFound(err)) throw err;
+  }
+  return backendUser || (await registerUser(token));
+};
 
 interface AuthProviderProps {
   authService: IAuthService;
@@ -44,7 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
             const authUser = await authService.getUser();
             if (authUser) {
               try {
-                const backendUser = await loadUser(token);
+                const backendUser = await loadOrCreateBackendUser(token);
                 if (isMounted) setUser({ ...authUser, ...backendUser });
               } catch (err) {
                 console.error("Failed to fetch backend user data:", err);
@@ -83,7 +99,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({
         const authUser = await authService.getUser();
         if (authUser) {
           try {
-            const backendUser = await loadUser(token);
+            const backendUser = await loadOrCreateBackendUser(token);
             setUser({ ...authUser, ...backendUser });
           } catch (err) {
             console.error("Failed to fetch backend user data:", err);
