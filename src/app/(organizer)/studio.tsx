@@ -14,7 +14,8 @@ import {
 } from "@/utils/gpxRoute";
 import { useEventContext } from "@/context/event-context";
 import { useOrganizerTheme } from "@/constants/organizerTheme";
-import type { SportType, TagModel } from "@/models/event";
+import type { FAQ, SportType, TagModel } from "@/models/event";
+import { StepFaq } from "@/components/studio/StepFaq";
 import {
   StepDetails,
   type DetailsLocalState,
@@ -42,10 +43,10 @@ import { StudioFooter } from "@/components/studio/StudioFooter";
 import { StudioHeader } from "@/components/studio/StudioHeader";
 import { StudioSuccess } from "@/components/studio/StudioSuccess";
 
-const TOTAL_STEPS = 4;
-const SUCCESS_STEP = 5;
+const TOTAL_STEPS = 5;
+const SUCCESS_STEP = 6;
 
-const STEP_LABELS = ["Details", "Location", "Registration", "Review"];
+const STEP_LABELS = ["Details", "Location", "Registration", "FAQ", "Review"];
 const DEFAULT_CAPACITY = 200;
 
 const EMPTY_VALUES: DetailsValues = {
@@ -115,6 +116,7 @@ export default function EventStudio() {
   const [waiverFile, setWaiverFile] = useState<WaiverFileInfo | null>(null);
   const [waiverUploading, setWaiverUploading] = useState(false);
   const [waiverError, setWaiverError] = useState<string | null>(null);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
 
   // Hydrate from an existing draft/event.
   useEffect(() => {
@@ -150,6 +152,7 @@ export default function EventStudio() {
       );
       setWaiverFile({ name: name || "Waiver.pdf" });
     }
+    setFaqs(draft?.frequentlyAskedQuestions ?? []);
     setEventType(draft?.eventType === "VIRTUAL" ? "VIRTUAL" : "IN_PERSON");
     if (draft?.latitude != null && draft?.longitude != null) {
       const { latitude, longitude } = draft;
@@ -229,6 +232,7 @@ export default function EventStudio() {
     mapGuid: carry.mapGuid,
     waiverGuid: registration.requireWaiver ? carry.waiverGuid : undefined,
     logoGuid: carry.logoGuid,
+    frequentlyAskedQuestions: faqs.filter((f) => f.question.trim()),
     organizationGuid: user?.id,
   });
 
@@ -443,6 +447,8 @@ export default function EventStudio() {
             waiverError={waiverError}
             onWaiverPick={handleWaiverPick}
           />
+        ) : step === 4 ? (
+          <StepFaq faqs={faqs} onChange={setFaqs} />
         ) : (
           <StepReview
             values={values}
@@ -452,6 +458,7 @@ export default function EventStudio() {
             venue={venue}
             registration={registration}
             hasWaiver={!!(carry.waiverGuid || waiverFile)}
+            faqs={faqs}
             onEdit={setStep}
           />
         )}
@@ -460,7 +467,7 @@ export default function EventStudio() {
         primaryLabel={
           step === TOTAL_STEPS
             ? "Publish event"
-            : step === 3
+            : step === 4
               ? "Review"
               : "Continue"
         }

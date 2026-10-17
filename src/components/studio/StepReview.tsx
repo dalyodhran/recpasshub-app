@@ -7,6 +7,7 @@ import {
   regionFromCoordinates,
   type RouteData,
 } from "@/utils/gpxRoute";
+import type { FAQ } from "@/models/event";
 import type { PlaceResult } from "@/api/map/mapService";
 import { useOrganizerTheme } from "@/constants/organizerTheme";
 import { SPORT_OPTIONS } from "@/data/studioMock";
@@ -24,6 +25,7 @@ interface StepReviewProps {
   venue: PlaceResult | null;
   registration: RegistrationValues;
   hasWaiver: boolean;
+  faqs: FAQ[];
   onEdit: (step: number) => void;
 }
 
@@ -117,6 +119,7 @@ export function StepReview({
   venue,
   registration,
   hasWaiver,
+  faqs,
   onEdit,
 }: StepReviewProps) {
   const t = useOrganizerTheme();
@@ -136,6 +139,8 @@ export function StepReview({
     registration.pricing === "PAID" && parseFloat(registration.cost) > 0
       ? `$${parseFloat(registration.cost).toFixed(2)}`
       : "Free";
+
+  const faqCount = faqs.filter((f) => f.question.trim()).length;
 
   return (
     <View style={styles.container}>
@@ -272,6 +277,15 @@ export function StepReview({
           <EditButton step={3} label="registration" onEdit={onEdit} />
         </View>
       </View>
+
+      <IconRow icon="quiz" step={4} label="FAQ" onEdit={onEdit}>
+        <Text style={[styles.primaryText, { color: t.text }]}>FAQ</Text>
+        <Text style={[styles.secondaryText, { color: t.textMuted }]}>
+          {faqCount
+            ? `${faqCount} ${faqCount === 1 ? "question" : "questions"}`
+            : "No questions added"}
+        </Text>
+      </IconRow>
     </View>
   );
 }
