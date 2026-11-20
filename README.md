@@ -1,56 +1,94 @@
-# Welcome to your Expo app 👋
+# Rec Pass Hub: Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native app for discovering local running, cycling, swimming and triathlon events, signing the waiver, and carrying your event pass on your phone. Organizers use the same app to build events, check attendees in with a QR scanner and message participants.
 
-## Get started
+![React Native](https://img.shields.io/badge/React%20Native-Expo-000020) ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6) ![Expo Router](https://img.shields.io/badge/Navigation-Expo%20Router-4630EB) ![Keycloak](https://img.shields.io/badge/Auth-Keycloak%20OIDC-4D4D4D)
 
-1. Install dependencies
+![Rec Pass Hub app screens: explore feed, event detail, waiver signing and race-day pass](docs/images/app-screens.png)
 
-   ```bash
-   npm install
-   ```
+*Hi-fi designs for the attendee flow, from left: the explore feed of nearby events, event details with course stats, signing the waiver during checkout, and the race-day pass with its QR code.*
 
-2. Start the app
+## What it does
 
-   ```bash
-   npx expo start
-   ```
+**For attendees**
+- **Explore nearby events.** The app uses the phone's location to load events within a radius, with filters by sport.
+- **Event details.** Distance, elevation, terrain and capacity, plus the course drawn on a map from the organizer's GPX file.
+- **Checkout.** A step-by-step registration flow in which the attendee reviews and signs the event's waiver.
+- **My Passes.** Each pass carries a QR code that organizers scan at check-in.
+- **Notifications and messages** from organizers.
 
-In the output, you'll find options to open the app in a
+**For organizers**
+- **Event studio.** A multi-step builder for creating and editing events: details, location, course map (GPX upload), waiver and logo, then a review step before publishing.
+- **Dashboard** of their events.
+- **QR check-in.** The camera scans attendee passes at the start line.
+- **Messages** to the people registered for an event.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## How it fits together
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```mermaid
+flowchart LR
+    app["Rec Pass Hub app<br/>React Native · Expo"] -->|OIDC login in system browser| kc["Keycloak"]
+    app -->|REST + bearer token<br/>Axios| api["recpasshub-service<br/>Spring Boot"]
+    api --> pg[("PostgreSQL")]
+    api --> s3[("S3<br/>GPX maps · waivers · logos")]
+    app -->|fetch GPX route| s3
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- **Sign-in:** Keycloak OpenID Connect through `WebBrowser.openAuthSessionAsync`. Tokens are kept in Expo SecureStore and attached to API calls by a shared Axios client.
+- **API:** the [Spring Boot backend](https://github.com/dalyodhran/recpasshub-service), set with `EXPO_PUBLIC_API_BASE_URL` (defaults to `http://localhost:8080`).
+- **Maps:** `react-native-maps` draws the course. GPX files are parsed on the device with `@we-gold/gpxjs`.
 
-### Other setup steps
+## Tech stack
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+| Area | Tools |
+|---|---|
+| Framework | React Native, Expo, TypeScript |
+| Navigation | Expo Router (file-based), separate route groups for attendee tabs and organizer screens |
+| Device features | `expo-location`, `expo-camera` (QR scanning), `expo-document-picker` and `expo-image-picker` (uploads), `expo-secure-store` |
+| Maps | `react-native-maps`, `@we-gold/gpxjs` |
+| Networking | Axios |
+| Animation | React Native Reanimated, Gesture Handler |
+| Quality | ESLint (Expo config), Jest with `jest-expo` |
 
-## Learn more
+## Project structure
 
-To learn more about developing your project with Expo, look at the following resources:
+```
+src/
+  app/
+    (tabs)/          Attendee tabs: explore, my passes, profile
+    (organizer)/     Organizer screens: dashboard, event studio, check-in, messages
+    event/           Event detail, checkout and event messages
+    pass/            Race-day pass with QR code
+    scanner.tsx      QR check-in scanner
+  api/               Typed clients for events, maps, waivers, logos and users
+  auth/              Keycloak provider and auth context
+  components/        Shared UI, including the event studio steps
+  context/           App-wide state (auth, events)
+  utils/             GPX route parsing and helpers
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Running locally
 
-## Join the community
+**Prerequisites:** Node.js, the Expo Go app or an iOS/Android simulator, and the [backend](https://github.com/dalyodhran/recpasshub-service) with Keycloak running.
 
-Join our community of developers creating universal apps.
+```bash
+npm install
+EXPO_PUBLIC_API_BASE_URL=http://<your-machine-ip>:8080 npx expo start
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Press `i` for the iOS simulator or `a` for Android, or scan the QR code with Expo Go.
+
+```bash
+npm run lint   # ESLint
+npm test       # Jest
+```
+
+## Related repositories
+
+- [recpasshub-service](https://github.com/dalyodhran/recpasshub-service): Spring Boot backend API
+- [recpasshub-ui](https://github.com/dalyodhran/recpasshub-ui): organizer web dashboard
+- [recchubpass-docker](https://github.com/dalyodhran/recchubpass-docker): Docker Compose stack for local development
+
+## Author
+
+Built by **Odhrán Daly**: [portfolio](https://www.odhran.ca) · [LinkedIn](https://www.linkedin.com/in/odhrandaly)
